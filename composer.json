@@ -1,0 +1,41 @@
+{
+	"name": "kdyby/github",
+	"type": "library",
+	"description": "Extended Github PHP SDK with authorization from KnpLabs for Nette Framework",
+	"keywords": ["nette", "github", "sdk", "authorization"],
+	"homepage": "http://kdyby.org",
+	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
+	"authors": [
+		{
+			"name": "Filip Procházka",
+			"homepage": "http://filip-prochazka.com",
+			"email": "filip@prochazka.su"
+		}
+	],
+	"require": {
+		"knplabs/github-api": "~1.2",
+		"nette/nette": "~2.1@dev",
+		"ext-curl": "*",
+		"ext-json": "*"
+	},
+	"require-dev": {
+		"nette/tester": "@dev"
+	},
+	"support": {
+		"email": "filip@prochazka.su",
+		"issues": "https://github.com/kdyby/github/issues"
+	},
+	"autoload": {
+		"psr-0": {
+			"Kdyby\\Github\\": "src/"
+		},
+		"classmap": [
+			"src/Kdyby/Github/exceptions.php"
+		]
+	},
+	"extra": {
+		"branch-alias": {
+			"dev-master": "1.0-dev"
+		}
+	}
+}
