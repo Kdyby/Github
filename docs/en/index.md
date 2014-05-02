@@ -111,14 +111,14 @@ class LoginPresenter extends BasePresenter
 			 */
 
 			try {
-				$me = $github->api('/me');
+				$me = $github->api('me')->show();
 
 				if (!$existing = $this->usersModel->findByGithubId($github->getUser())) {
 					/**
 					 * Variable $me contains all the public information about the user
 					 * including github id, name and email, if he allowed you to see it.
 					 */
-					$existing = $this->usersModel->registerFromGithub($github->getProfile());
+					$existing = $this->usersModel->registerFromGithub($me);
 				}
 
 				/**
