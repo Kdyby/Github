@@ -8,7 +8,7 @@
  * @package Kdyby\Github
  */
 
-namespace KdybyTests\Facebook;
+namespace KdybyTests\Github;
 
 use Kdyby;
 use KdybyTests;

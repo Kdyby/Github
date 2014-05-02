@@ -10,10 +10,7 @@
 
 namespace Kdyby\Github\Diagnostics;
 
-use Github\Exception\RuntimeException;
 use Guzzle\Common\Event;
-use Kdyby\Facebook;
-use Kdyby\Facebook\Api\CurlClient;
 use Kdyby\Github\Api\HttpClient;
 use Nette;
 use Nette\Utils\Html;

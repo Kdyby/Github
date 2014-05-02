@@ -116,7 +116,7 @@ class LoginDialog extends Nette\Application\UI\Control
 
 	/**
 	 * Checks, if there is a user in storage and if not, it redirects to login dialog.
-	 * If the user is already in session storage, it will behave, as if were redirected from facebook right now,
+	 * If the user is already in session storage, it will behave, as if were redirected from github right now,
 	 * this means, it will directly call onResponse event.
 	 *
 	 * @throws \Nette\Application\AbortException

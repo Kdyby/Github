@@ -12,7 +12,7 @@ namespace Kdyby\Github;
 
 
 /**
- * Common interface for caching facebook exceptions
+ * Common interface for caching github exceptions
  *
  * @author Filip Procházka <email@filip-prochazka.com>
  */

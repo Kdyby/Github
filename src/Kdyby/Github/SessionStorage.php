@@ -75,8 +75,6 @@ class SessionStorage extends Nette\Object
 
 
 	/**
-	 * Get the data for $key, persisted by BaseFacebook::setPersistentData()
-	 *
 	 * @param string $key The key of the data to retrieve
 	 * @param mixed $default The default value to return if $key is not found
 	 *
