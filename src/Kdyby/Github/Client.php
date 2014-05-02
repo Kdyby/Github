@@ -118,6 +118,17 @@ class Client extends Github\Client
 
 
 	/**
+	 * @param int|string $profileId
+	 * @return Profile
+	 */
+	public function getProfile($profileId = NULL)
+	{
+		return new Profile($this, $profileId);
+	}
+
+
+
+	/**
 	 * Sets the access token for api calls.  Use this if you get
 	 * your access token by other means and just want the SDK
 	 * to use it.
