@@ -1,7 +1,7 @@
 {
 	"name": "kdyby/github",
 	"type": "library",
-	"description": "Extended Github PHP SDK with authorization from KnpLabs for Nette Framework",
+	"description": "Extended Github PHP SDK from KnpLabs with authorization for Nette Framework",
 	"keywords": ["nette", "github", "sdk", "authorization"],
 	"homepage": "http://kdyby.org",
 	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
