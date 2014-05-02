@@ -12,6 +12,7 @@ namespace Kdyby\Github\DI;
 
 use Kdyby;
 use Nette;
+use Nette\DI\Statement;
 use Nette\PhpGenerator as Code;
 use Nette\Utils\Validators;
 
@@ -30,6 +31,9 @@ class GithubExtension extends Nette\DI\CompilerExtension
 		'appId' => NULL,
 		'appSecret' => NULL,
 		'permissions' => array(),
+		'persistentCache' => FALSE,
+		'memoryCache' => TRUE,
+		'debugger' => '%debugMode%'
 	);
 
 
@@ -53,15 +57,30 @@ class GithubExtension extends Nette\DI\CompilerExtension
 			->addSetup('$permissions', array($config['permissions']));
 
 		$httpClient = $builder->addDefinition($this->prefix('httpClient'))
-			->setClass('Kdyby\Github\Api\HttpClient');
+			->setClass('Kdyby\Github\Api\HttpClient')
+			->addSetup('useMemoryCache', array($config['memoryCache']));
+
+		if ($config['persistentCache'] === 'filesystem') {
+			$httpClient->addSetup('setCache', array(
+				new Statement('Github\HttpClient\Cache\FilesystemCache', array(
+					$builder->expand('%tempDir%/Kdyby.Github.Api')
+				))
+			));
+
+		} elseif ($config['persistentCache'] === FALSE) {
+			$httpClient->addSetup('setCache', array(new Statement('Kdyby\Github\Api\Cache\NullCache')));
+
+		} else {
+			// todo: allow custom implementations
+			throw new Kdyby\Github\NotSupportedException("Invalid cache type, supported is only 'filesystem' or boolean FALSE for turning the cache off.");
+		}
 
 		$builder->addDefinition($this->prefix('session'))
 			->setClass('Kdyby\Github\SessionStorage');
 
-		if ($builder->parameters['debugMode']) {
+		if ($config['debugger']) {
 			$builder->addDefinition($this->prefix('panel'))
-				->setClass('Kdyby\Github\Diagnostics\Panel')
-				->setInject(FALSE);
+				->setClass('Kdyby\Github\Diagnostics\Panel');
 
 			$httpClient->addSetup($this->prefix('@panel') . '::register', array('@self'));
 		}
