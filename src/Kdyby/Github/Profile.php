@@ -84,14 +84,10 @@ class Profile extends Nette\Object
 			try {
 
 				if ($this->profileId !== NULL) {
-					/** @var User $users */
-					$users = $this->github->api('users');
-					$this->details = $users->show($this->getId());
+					$this->details = $this->github->api('/users/' . rawurlencode($this->profileId));
 
 				} elseif ($this->github->getUser()) {
-					/** @var CurrentUser $currentUser */
-					$currentUser = $this->github->api('me');
-					$this->details = $currentUser->show();
+					$this->details = $this->github->api('/user');
 
 				} else {
 					$this->details = array();

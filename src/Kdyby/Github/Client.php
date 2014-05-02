@@ -129,6 +129,57 @@ class Client extends Github\Client
 
 
 	/**
+	 * Serves as factory ApiInterface classes.
+	 *
+	 * But it can be also used as mediator to direct calling of API requests.
+	 * Simply pass anything starting with slash and it will call the Api, for example instead of
+	 * <code>
+	 * $details = $github->api('me')->show();
+	 * </code>
+	 *
+	 * call
+	 * <code>
+	 * $details = $github->api('/user');
+	 * </code>
+	 *
+	 * @param string $name
+	 * @param string $method
+	 * @param array $params
+	 * @throws InvalidArgumentException
+	 * @throws Github\Exception\ExceptionInterface
+	 * @return array|string|Github\Api\ApiInterface
+	 */
+	public function api($name, $method = 'GET', array $params = array())
+	{
+		if (substr($name, 0, 1) !== '/') {
+			return parent::api($name);
+		}
+
+		if (is_array($method)) {
+			$params = $method;
+			$method = 'GET';
+		}
+
+		/** @var Response $response */
+		$response = $this->getHttpClient()->request(
+			(string) $this->config->createUrl('api', $name, $params),
+			NULL,
+			$method
+		);
+
+		$body = $response->getBody(TRUE);
+
+		try {
+			return Nette\ArrayHash::from(Json::decode($body, Json::FORCE_ARRAY));
+
+		} catch (Nette\Utils\JsonException $e) {
+			return $body;
+		}
+	}
+
+
+
+	/**
 	 * Sets the access token for api calls.  Use this if you get
 	 * your access token by other means and just want the SDK
 	 * to use it.
@@ -255,9 +306,7 @@ class Client extends Github\Client
 	protected function getUserFromAccessToken()
 	{
 		try {
-			/** @var Github\Api\CurrentUser $currentUser */
-			$currentUser = $this->api('me');
-			$user = $currentUser->show();
+			$user = $this->api('/user');
 
 			return isset($user['id']) ? $user['id'] : 0;
 		} catch (\Exception $e) { }
