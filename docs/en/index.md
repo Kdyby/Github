@@ -113,12 +113,12 @@ class LoginPresenter extends BasePresenter
 			try {
 				$me = $github->api('/me');
 
-				if (!$existing = $this->usersModel->findByGithubId($fb->getUser())) {
+				if (!$existing = $this->usersModel->findByGithubId($github->getUser())) {
 					/**
 					 * Variable $me contains all the public information about the user
 					 * including github id, name and email, if he allowed you to see it.
 					 */
-					$existing = $this->usersModel->registerFromGithub($fb->getProfile());
+					$existing = $this->usersModel->registerFromGithub($github->getProfile());
 				}
 
 				/**
@@ -128,7 +128,7 @@ class LoginPresenter extends BasePresenter
 				 * when the user is not logged in to your website,
 				 * with the access token in his session.
 				 */
-				$this->usersModel->updateGithubAccessToken($fb->getUser(), $fb->getAccessToken());
+				$this->usersModel->updateGithubAccessToken($github->getUser(), $github->getAccessToken());
 
 				/**
 				 * Nette\Security\User accepts not only textual credentials,
