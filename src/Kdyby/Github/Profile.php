@@ -10,6 +10,7 @@
 
 namespace Kdyby\Github;
 
+use Github\Api\CurrentUser;
 use Github\Api\User;
 use Guzzle\Http\Message\Response;
 use Kdyby;
@@ -88,9 +89,9 @@ class Profile extends Nette\Object
 					$this->details = $users->show($this->getId());
 
 				} elseif ($this->github->getUser()) {
-					/** @var Response $response */
-					$response = $this->github->getHttpClient()->get('/user');
-					$this->details = Json::decode($response->getBody(TRUE), Json::FORCE_ARRAY);
+					/** @var CurrentUser $currentUser */
+					$currentUser = $this->github->api('me');
+					$this->details = $currentUser->show();
 
 				} else {
 					$this->details = array();

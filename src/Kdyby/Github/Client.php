@@ -255,9 +255,9 @@ class Client extends Github\Client
 	protected function getUserFromAccessToken()
 	{
 		try {
-			/** @var Response $response */
-			$response = $this->getHttpClient()->get('/user');
-			$user = Json::decode($response->getBody(TRUE), Json::FORCE_ARRAY);
+			/** @var Github\Api\CurrentUser $currentUser */
+			$currentUser = $this->api('me');
+			$user = $currentUser->show();
 
 			return isset($user['id']) ? $user['id'] : 0;
 		} catch (\Exception $e) { }
