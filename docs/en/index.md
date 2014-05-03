@@ -1,8 +1,10 @@
 Quickstart
 ==========
 
-This addon extends [knplabs/github-api](https://packagist.org/packages/knplabs/github-api) and adds support for oauth connection to Github,
+This addon adds support for oauth connection to Github,
 so you can seamlessly integrate your application with and provide login through Github.
+
+You can also communicate with Github's api through this addon.
 
 
 
@@ -46,14 +48,6 @@ github:
 ```
 
 And that's all.
-
-
-
-Calling Github API
---------------------
-
-Because this addon extends the original SDK, you can have a look at what `api()` does and more on their documentation,
-which as [in the github repository KnpLabs/php-github-api](https://github.com/KnpLabs/php-github-api/blob/master/doc/index.md)
 
 
 
@@ -111,7 +105,7 @@ class LoginPresenter extends BasePresenter
 			 */
 
 			try {
-				$me = $github->api('me')->show();
+				$me = $github->api('/user');
 
 				if (!$existing = $this->usersModel->findByGithubId($github->getUser())) {
 					/**
@@ -140,7 +134,7 @@ class LoginPresenter extends BasePresenter
 				 * You can celebrate now! The user is authenticated :)
 				 */
 
-			} catch (\Github\Exception\ExceptionInterface $e) {
+			} catch (\Kdyby\Github\GithubApiException $e) {
 				/**
 				 * You might wanna know what happened, so let's log the exception.
 				 *
@@ -175,6 +169,24 @@ and your `onResponse` callback will be invoked. And from there, it's a child pla
 
 
 
+Calling Github API
+--------------------
+
+The API documentation [can be found on Github](https://developer.github.com/v3/).
+All requests are done against api v3 and should return array parsed from received JSON.
+
+If you use the authentication and acquire access token, it will be automatically passed to all requests.
+
+Calling the API is simple, for example listing open pull requests on repository "Hello-World"
+
+```php
+$openPullRequests = $github->api('/repos/octocat/Hello-World/pulls/1', array('state' => 'open'));
+```
+
+The expected output can be seen [in Github's documentation](https://developer.github.com/v3/pulls/#list-pull-requests).
+
+
+
 Best practices
 --------------
 
@@ -185,7 +197,7 @@ Therefore you must wrap every github api call with `try catch`
 ```php
 try {
 	// ...
-} catch (\Github\Exception\ExceptionInterface $e) {
+} catch (\Kdyby\Github\GithubApiException $e) {
 	// ...
 }
 ```

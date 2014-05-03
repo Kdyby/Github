@@ -139,7 +139,7 @@ class Client extends Nette\Object
 	 * $details = $github->api('/user');
 	 * </code>
 	 *
-	 * @param string $name
+	 * @param string $path
 	 * @param string $method The argument is optional
 	 * @param array $params Query parameters
 	 * @param array $post Post request parameters or body to send
@@ -147,7 +147,7 @@ class Client extends Nette\Object
 	 * @throws GithubApiException
 	 * @return Nette\ArrayHash|string
 	 */
-	public function api($name, $method = 'GET', array $params = array(), array $post = array(), array $headers = array())
+	public function api($path, $method = 'GET', array $params = array(), array $post = array(), array $headers = array())
 	{
 		if (is_array($method)) {
 			$headers = $post;
@@ -161,7 +161,7 @@ class Client extends Nette\Object
 		}
 
 		$result = $this->httpClient->makeRequest(
-			$this->config->createUrl('api', $name, $params),
+			$this->config->createUrl('api', $path, $params),
 			$method,
 			$post,
 			$headers
