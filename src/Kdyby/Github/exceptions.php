@@ -46,7 +46,7 @@ class NotSupportedException extends \LogicException implements Exception
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class GithubApiException extends \RuntimeException implements Exception
+class ApiException extends \RuntimeException implements Exception
 {
 
 }
@@ -56,7 +56,7 @@ class GithubApiException extends \RuntimeException implements Exception
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class ApiLimitExceedException extends GithubApiException
+class ApiLimitExceedException extends ApiException
 {
 
 }
@@ -66,7 +66,7 @@ class ApiLimitExceedException extends GithubApiException
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class RequestFailedException extends GithubApiException
+class RequestFailedException extends ApiException
 {
 
 }
@@ -76,7 +76,7 @@ class RequestFailedException extends GithubApiException
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class ValidationFailedException extends GithubApiException
+class ValidationFailedException extends ApiException
 {
 
 }
@@ -86,7 +86,7 @@ class ValidationFailedException extends GithubApiException
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class BadRequestException extends GithubApiException
+class BadRequestException extends ApiException
 {
 
 }

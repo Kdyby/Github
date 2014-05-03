@@ -144,7 +144,7 @@ class Client extends Nette\Object
 	 * @param array $params Query parameters
 	 * @param array $post Post request parameters or body to send
 	 * @param array $headers Http request headers
-	 * @throws GithubApiException
+	 * @throws ApiException
 	 * @return Nette\ArrayHash|string
 	 */
 	public function api($path, $method = 'GET', array $params = array(), array $post = array(), array $headers = array())

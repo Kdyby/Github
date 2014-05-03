@@ -134,7 +134,7 @@ class LoginPresenter extends BasePresenter
 				 * You can celebrate now! The user is authenticated :)
 				 */
 
-			} catch (\Kdyby\Github\GithubApiException $e) {
+			} catch (\Kdyby\Github\ApiException $e) {
 				/**
 				 * You might wanna know what happened, so let's log the exception.
 				 *
@@ -197,7 +197,7 @@ Therefore you must wrap every github api call with `try catch`
 ```php
 try {
 	// ...
-} catch (\Kdyby\Github\GithubApiException $e) {
+} catch (\Kdyby\Github\ApiException $e) {
 	// ...
 }
 ```

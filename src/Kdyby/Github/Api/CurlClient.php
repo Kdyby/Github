@@ -122,7 +122,7 @@ class CurlClient extends Nette\Object
 	 * @param array $post The parameters to use for the POST body
 	 * @param array $headers
 	 *
-	 * @throws Github\GithubApiException
+	 * @throws Github\ApiException
 	 * @return string The response text
 	 */
 	public function makeRequest(Nette\Http\Url $url, $method = 'GET', array $post = array(), array $headers = array())
@@ -191,7 +191,7 @@ class CurlClient extends Nette\Object
 
 		} catch (Nette\Utils\JsonException $jsonException) {
 			if (isset($info['headers'][0]['Content-Type']) && preg_match('~^application/json;.*~is', $info['headers'][0]['Content-Type'])) {
-				$e = new Github\GithubApiException($jsonException->getMessage() . (isset($response) ? "\n\n" . $response : ''), $info['http_code']);
+				$e = new Github\ApiException($jsonException->getMessage() . (isset($response) ? "\n\n" . $response : ''), $info['http_code']);
 				curl_close($ch);
 				$this->onError($e, $info);
 				throw $e;
