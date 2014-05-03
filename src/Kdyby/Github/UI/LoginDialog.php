@@ -18,6 +18,9 @@ use Nette\Http\UrlScript;
 
 
 /**
+ * Component that you can connect to presenter
+ * and use as public mediator for Github OAuth redirects communication.
+ *
  * @author Filip Procházka <filip@prochazka.su>
  *
  * @method onResponse(LoginDialog $dialog)

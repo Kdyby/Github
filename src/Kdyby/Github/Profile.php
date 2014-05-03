@@ -17,6 +17,8 @@ use Nette;
 
 
 /**
+ * Simplifies accessing the user profile and it's information.
+ *
  * @author Filip Procházka <filip@prochazka.su>
  */
 class Profile extends Nette\Object

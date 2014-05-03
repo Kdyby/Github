@@ -17,6 +17,8 @@ use Nette\Http\UrlScript;
 
 
 /**
+ * Holds the application id and secret for other classes to use.
+ *
  * @author Filip Procházka <filip@prochazka.su>
  */
 class Configuration extends Nette\Object

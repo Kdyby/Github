@@ -16,6 +16,8 @@ use Nette\Diagnostics\Debugger;
 
 
 /**
+ * Stores accessToken and other critical data that should be shared across requests.
+ *
  * @author Filip Procházka <filip@prochazka.su>
  *
  * @property string $state A CSRF state variable to assist in the defense against CSRF attacks.

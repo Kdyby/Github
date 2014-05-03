@@ -17,6 +17,9 @@ use Nette;
 
 
 /**
+ * Github api client that servers for communication
+ * and handles authorization on the api level.
+ *
  * @author Filip Procházka <filip@prochazka.su>
  */
 class Client extends Nette\Object
