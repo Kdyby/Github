@@ -12,7 +12,6 @@ namespace Kdyby\Github\DI;
 
 use Kdyby;
 use Nette;
-use Nette\DI\Statement;
 use Nette\PhpGenerator as Code;
 use Nette\Utils\Validators;
 
@@ -31,10 +30,17 @@ class GithubExtension extends Nette\DI\CompilerExtension
 		'appId' => NULL,
 		'appSecret' => NULL,
 		'permissions' => array(),
-		'persistentCache' => FALSE,
-		'memoryCache' => TRUE,
-		'debugger' => '%debugMode%'
+		'clearAllWithLogout' => TRUE,
+		'curlOptions' => array(),
+		'debugger' => '%debugMode%',
 	);
+
+
+
+	public function __construct()
+	{
+		$this->defaults['curlOptions'] = Kdyby\Github\Api\CurlClient::$defaultCurlOptions;
+	}
 
 
 
@@ -56,24 +62,16 @@ class GithubExtension extends Nette\DI\CompilerExtension
 			))
 			->addSetup('$permissions', array($config['permissions']));
 
-		$httpClient = $builder->addDefinition($this->prefix('httpClient'))
-			->setClass('Kdyby\Github\Api\HttpClient')
-			->addSetup('useMemoryCache', array($config['memoryCache']));
-
-		if ($config['persistentCache'] === 'filesystem') {
-			$httpClient->addSetup('setCache', array(
-				new Statement('Github\HttpClient\Cache\FilesystemCache', array(
-					$builder->expand('%tempDir%/Kdyby.Github.Api')
-				))
-			));
-
-		} elseif ($config['persistentCache'] === FALSE) {
-			$httpClient->addSetup('setCache', array(new Statement('Kdyby\Github\Api\Cache\NullCache')));
-
-		} else {
-			// todo: allow custom implementations
-			throw new Kdyby\Github\NotSupportedException("Invalid cache type, supported is only 'filesystem' or boolean FALSE for turning the cache off.");
+		foreach ($config['curlOptions'] as $option => $value) {
+			if (defined($option)) {
+				unset($config['curlOptions'][$option]);
+				$config['curlOptions'][constant($option)] = $value;
+			}
 		}
+
+		$httpClient = $builder->addDefinition($this->prefix('httpClient'))
+			->setClass('Kdyby\Github\Api\CurlClient')
+			->addSetup('$service->curlOptions = ?;', array($config['curlOptions']));
 
 		$builder->addDefinition($this->prefix('session'))
 			->setClass('Kdyby\Github\SessionStorage');
@@ -83,6 +81,13 @@ class GithubExtension extends Nette\DI\CompilerExtension
 				->setClass('Kdyby\Github\Diagnostics\Panel');
 
 			$httpClient->addSetup($this->prefix('@panel') . '::register', array('@self'));
+		}
+
+		if ($config['clearAllWithLogout']) {
+			$builder->getDefinition('user')
+				->addSetup('$sl = ?; ?->onLoggedOut[] = function () use ($sl) { $sl->getService(?)->clearAll(); }', array(
+					'@container', '@self', $this->prefix('session')
+				));
 		}
 	}
 

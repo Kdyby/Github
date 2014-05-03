@@ -40,3 +40,53 @@ class NotSupportedException extends \LogicException implements Exception
 {
 
 }
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class GithubApiException extends \RuntimeException implements Exception
+{
+
+}
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class ApiLimitExceedException extends GithubApiException
+{
+
+}
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class RequestFailedException extends GithubApiException
+{
+
+}
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class ValidationFailedException extends GithubApiException
+{
+
+}
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class BadRequestException extends GithubApiException
+{
+
+}

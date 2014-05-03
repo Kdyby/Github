@@ -15,8 +15,9 @@
 		<h2><?php echo $esc(strtoupper((string) $call->info['method'])); ?> <?php echo $esc((string) $call->url); ?></h2>
 		<table>
 			<tr><th>Time</th><td><?php echo $esc(number_format($call->time * 1000, 2, '.', ' ')) ?>&nbsp;ms</td></tr>
+			<tr><th>Query</th><td><?php echo $click($call->params, TRUE); ?></td></tr>
 			<tr><th>Response</th><td><?php echo $click($call->result ?: $call->exception, TRUE); ?></td></tr>
-			<tr><th>Params</th><td><?php echo $click($call->params, TRUE); ?></td></tr>
+			<tr><th>Options</th><td><?php echo $click($call->options, TRUE); ?></td></tr>
 			<tr><th>Info</th><td><?php echo $click($call->info, TRUE); ?></td></tr>
 		</table>
 	<?php endforeach; ?>

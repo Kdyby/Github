@@ -72,14 +72,6 @@ class Configuration extends Nette\Object
 		} else {
 			$url = new UrlScript($this->domains[$name]);
 			$url->path .= ltrim($path, '/');
-
-			if ($name === 'oauth') {
-				$params['client_id'] = $this->appId;
-
-				if ($path === 'access_token') {
-					$params['client_secret'] = $this->appSecret;
-				}
-			}
 		}
 
 		$url->appendQuery(array_map(function ($param) {

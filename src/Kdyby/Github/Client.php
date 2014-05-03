@@ -11,19 +11,21 @@
 namespace Kdyby\Github;
 
 use Github;
-use Github\HttpClient\HttpClientInterface;
-use Guzzle\Http\Message\Response;
 use Kdyby;
 use Nette;
-use Nette\Utils\Json;
 
 
 
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class Client extends Github\Client
+class Client extends Nette\Object
 {
+
+	/**
+	 * @var Api\CurlClient
+	 */
+	private $httpClient;
 
 	/**
 	 * @var Configuration
@@ -59,14 +61,14 @@ class Client extends Github\Client
 	 * @param Configuration $config
 	 * @param Nette\Http\IRequest $httpRequest
 	 * @param SessionStorage $session
-	 * @param HttpClientInterface $httpClient
+	 * @param Api\CurlClient $httpClient
 	 */
-	public function __construct(Configuration $config, Nette\Http\IRequest $httpRequest, SessionStorage $session, HttpClientInterface $httpClient)
+	public function __construct(Configuration $config, Nette\Http\IRequest $httpRequest, SessionStorage $session, Api\CurlClient $httpClient)
 	{
-		parent::__construct($httpClient);
 		$this->config = $config;
 		$this->httpRequest = $httpRequest;
 		$this->session = $session;
+		$this->httpClient = $httpClient;
 	}
 
 
@@ -129,52 +131,40 @@ class Client extends Github\Client
 
 
 	/**
-	 * Serves as factory ApiInterface classes.
-	 *
-	 * But it can be also used as mediator to direct calling of API requests.
-	 * Simply pass anything starting with slash and it will call the Api, for example instead of
-	 * <code>
-	 * $details = $github->api('me')->show();
-	 * </code>
-	 *
-	 * call
+	 * Simply pass anything starting with a slash and it will call the Api, for example
 	 * <code>
 	 * $details = $github->api('/user');
 	 * </code>
 	 *
 	 * @param string $name
-	 * @param string $method
-	 * @param array $params
-	 * @throws InvalidArgumentException
-	 * @throws Github\Exception\ExceptionInterface
-	 * @return array|string|Github\Api\ApiInterface
+	 * @param string $method The argument is optional
+	 * @param array $params Query parameters
+	 * @param array $post Post request parameters or body to send
+	 * @param array $headers Http request headers
+	 * @throws GithubApiException
+	 * @return Nette\ArrayHash|string
 	 */
-	public function api($name, $method = 'GET', array $params = array())
+	public function api($name, $method = 'GET', array $params = array(), array $post = array(), array $headers = array())
 	{
-		if (substr($name, 0, 1) !== '/') {
-			return parent::api($name);
-		}
-
 		if (is_array($method)) {
+			$headers = $post;
+			$post = $params;
 			$params = $method;
 			$method = 'GET';
 		}
 
-		/** @var Response $response */
-		$response = $this->getHttpClient()->request(
-			(string) $this->config->createUrl('api', $name, $params),
-			NULL,
-			$method
+		if ($token = $this->getAccessToken()) {
+			$headers['Authorization'] = 'token ' . $token;
+		}
+
+		$result = $this->httpClient->makeRequest(
+			$this->config->createUrl('api', $name, $params),
+			$method,
+			$post,
+			$headers
 		);
 
-		$body = $response->getBody(TRUE);
-
-		try {
-			return Nette\ArrayHash::from(Json::decode($body, Json::FORCE_ARRAY));
-
-		} catch (Nette\Utils\JsonException $e) {
-			return $body;
-		}
+		return is_array($result) ? Nette\ArrayHash::from($result) : $result;
 	}
 
 
@@ -339,21 +329,21 @@ class Client extends Github\Client
 		}
 
 		try {
-			/** @var Response $response */
-			$response = $this->getHttpClient()->get(
-				(string) $this->config->createUrl('oauth', 'access_token', array(
+			$response = $this->httpClient->makeRequest(
+				$this->config->createUrl('oauth', 'access_token', array(
+					'client_id' => $this->config->appId,
+					'client_secret' => $this->config->appSecret,
 					'code' => $code,
 					'redirect_uri' => $redirectUri,
 				)),
+				'GET',
 				array(),
 				array('Accept' => 'application/json')
 			);
 
-			if (empty($response)) {
+			if (empty($response) || !is_array($response)) {
 				return FALSE;
 			}
-
-			$params = Json::decode($response->getBody(TRUE), Json::FORCE_ARRAY);
 
 		} catch (\Exception $e) {
 			// most likely that user very recently revoked authorization.
@@ -361,7 +351,7 @@ class Client extends Github\Client
 			return FALSE;
 		}
 
-		return isset($params['access_token']) ? $params['access_token'] : FALSE;
+		return isset($response['access_token']) ? $response['access_token'] : FALSE;
 	}
 
 

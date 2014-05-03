@@ -11,6 +11,7 @@
 namespace Kdyby\Github\Diagnostics;
 
 use Guzzle\Common\Event;
+use Kdyby\Github\Api\CurlClient;
 use Kdyby\Github\Api\HttpClient;
 use Nette;
 use Nette\Utils\Html;
@@ -104,18 +105,21 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 	/**
-	 * @param Event|\Guzzle\Http\Message\Request[]|\Guzzle\Http\Message\Response[] $event
+	 * @param string|object $url
+	 * @param array $options
 	 */
-	public function begin(Event $event)
+	public function begin($url, array $options)
 	{
-		$request = $event['request'];
+		if ($this->current) {return;}
 
-		$url = new Nette\Http\UrlScript($request->getUrl());
+		$url = new Nette\Http\Url($url);
 		@parse_str($url->getQuery(), $params);
+		$url->setQuery('');
 
-		$this->calls[spl_object_hash($request)] = (object)array(
-			'url' => $url->getHostUrl() . $url->path,
+		$this->calls[] = $this->current = (object) array(
+			'url' => (string) $url,
 			'params' => $params,
+			'options' => self::toConstantNames($options),
 			'result' => NULL,
 			'exception' => NULL,
 			'info' => array(),
@@ -126,61 +130,48 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 	/**
-	 * @param Event|\Guzzle\Http\Message\Request[]|\Guzzle\Http\Message\Response[] $event
+	 * @param mixed $result
+	 * @param array $curlInfo
 	 */
-	public function success(Event $event)
+	public function success($result, array $curlInfo)
 	{
-		$response = $event['request']->getResponse();
-		$current = $this->calls[spl_object_hash($event['request'])];
-
-		$curlInfo = $response->getInfo();
-		$curlInfo['method'] = $event['request']->getMethod();
-		$this->totalTime += $current->time = $curlInfo['total_time'];
+		if (!$this->current) {return;}
+		$this->totalTime += $this->current->time = $curlInfo['total_time'];
 		unset($curlInfo['total_time']);
-		$current->info = $curlInfo;
-
-		$result = $response->getBody(TRUE);
-		try {
-			$result = Nette\Utils\Json::decode($result);
-
-		} catch (Nette\Utils\JsonException $e) {
-			@parse_str($result, $params);
-			$result = !empty($params) ? $params : $result;
-		}
-
-		$current->result = $result;
+		$this->current->info = $curlInfo;
+		$this->current->result = $result;
+		$this->current = NULL;
 	}
 
 
 
 	/**
-	 * @param Event|\Guzzle\Http\Message\Request[]|\Guzzle\Http\Message\Response[] $event
+	 * @param \Exception $exception
+	 * @param array $curlInfo
 	 */
-	public function failure(Event $event)
+	public function failure(\Exception $exception, array $curlInfo)
 	{
-		$response = $event['request']->getResponse();
-		$current = $this->calls[spl_object_hash($event['request'])];
-
-		$curlInfo = $response->getInfo();
-		$curlInfo['method'] = $event['request']->getMethod();
-		$this->totalTime += $current->time = $curlInfo['total_time'];
+		if (!$this->current) {return;}
+		$this->totalTime += $this->current->time = $curlInfo['total_time'];
 		unset($curlInfo['total_time']);
-		$current->info = $curlInfo;
-		$current->exception = $event['exception'];
+		$this->current->info = $curlInfo;
+		$this->current->exception = $exception;
+
+		$this->current = NULL;
 	}
 
 
 
 	/**
-	 * @param HttpClient $client
-	 * @return Panel
+	 * @param CurlClient $client
 	 */
-	public function register(HttpClient $client)
+	public function register(CurlClient $client)
 	{
-		$client->setPanel($this);
+		$client->onRequest[] = $this->begin;
+		$client->onError[] = $this->failure;
+		$client->onSuccess[] = $this->success;
+
 		self::getDebuggerBar()->addPanel($this);
-
-		return $this;
 	}
 
 
@@ -191,6 +182,33 @@ class Panel extends Nette\Object implements IBarPanel
 	private static function getDebuggerBar()
 	{
 		return method_exists('Tracy\Debugger', 'getBar') ? Debugger::getBar() : Debugger::$bar;
+	}
+
+
+
+	/**
+	 * @param array $options
+	 */
+	private function toConstantNames(array $options)
+	{
+		static $map;
+		if (!$map) {
+			$map = array();
+			foreach (get_defined_constants() as $name => $value) {
+				if (substr($name, 0, 8) !== 'CURLOPT_') {
+					continue;
+				}
+
+				$map[$value] = $name;
+			}
+		}
+
+		$renamed = array();
+		foreach ($options as $int => $value) {
+			$renamed[isset($map[$int]) ? $map[$int] : $int] = $value;
+		}
+
+		return $renamed;
 	}
 
 }

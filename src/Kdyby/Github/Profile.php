@@ -11,11 +11,8 @@
 namespace Kdyby\Github;
 
 use Github\Api\CurrentUser;
-use Github\Api\User;
-use Guzzle\Http\Message\Response;
 use Kdyby;
 use Nette;
-use Nette\Utils\Json;
 
 
 

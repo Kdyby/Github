@@ -13,7 +13,6 @@
 		}
 	],
 	"require": {
-		"knplabs/github-api": "~1.2",
 		"nette/nette": "~2.1@dev",
 		"ext-curl": "*",
 		"ext-json": "*"
