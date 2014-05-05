@@ -1,8 +1,8 @@
 {
 	"name": "kdyby/github",
 	"type": "library",
-	"description": "Extended Github API client with authorization for Nette Framework",
-	"keywords": ["nette", "github", "sdk", "authorization"],
+	"description": "Github API client with authorization for Nette Framework",
+	"keywords": ["nette", "kdyby", "github", "sdk", "authorization"],
 	"homepage": "http://kdyby.org",
 	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
 	"authors": [
