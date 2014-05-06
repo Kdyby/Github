@@ -13,8 +13,13 @@ namespace Kdyby\Github;
 use Github;
 use Kdyby;
 use Nette;
+use Nette\Utils\ArrayHash;
 
 
+
+if (!class_exists('Nette\Utils\ArrayHash')) {
+	class_alias('Nette\ArrayHash', 'Nette\Utils\ArrayHash');
+}
 
 /**
  * Github api client that serves for communication
@@ -145,7 +150,7 @@ class Client extends Nette\Object
 	 * @param array $post Post request parameters or body to send
 	 * @param array $headers Http request headers
 	 * @throws ApiException
-	 * @return Nette\ArrayHash|string
+	 * @return ArrayHash|string
 	 */
 	public function api($path, $method = 'GET', array $params = array(), array $post = array(), array $headers = array())
 	{
@@ -167,7 +172,7 @@ class Client extends Nette\Object
 			$headers
 		);
 
-		return is_array($result) ? Nette\ArrayHash::from($result) : $result;
+		return is_array($result) ? ArrayHash::from($result) : $result;
 	}
 
 

@@ -13,8 +13,13 @@ namespace Kdyby\Github;
 use Github\Api\CurrentUser;
 use Kdyby;
 use Nette;
+use Nette\Utils\ArrayHash;
 
 
+
+if (!class_exists('Nette\Utils\ArrayHash')) {
+	class_alias('Nette\ArrayHash', 'Nette\Utils\ArrayHash');
+}
 
 /**
  * Simplifies accessing the user profile and it's information.
@@ -36,7 +41,7 @@ class Profile extends Nette\Object
 	private $profileId;
 
 	/**
-	 * @var \Nette\ArrayHash
+	 * @var ArrayHash
 	 */
 	private $details;
 
@@ -75,7 +80,7 @@ class Profile extends Nette\Object
 
 	/**
 	 * @param string $key
-	 * @return \Nette\ArrayHash|NULL
+	 * @return ArrayHash|NULL
 	 */
 	public function getDetails($key = NULL)
 	{
