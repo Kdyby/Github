@@ -178,6 +178,7 @@ class LoginDialog extends Nette\Application\UI\Control
 
 	public function handleResponse()
 	{
+		$this->client->getUser(); // check the received parameters and save user
 		$this->onResponse($this);
 		$this->presenter->redirect('this');
 	}
