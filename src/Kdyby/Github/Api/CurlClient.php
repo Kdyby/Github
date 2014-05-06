@@ -146,6 +146,14 @@ class CurlClient extends Nette\Object
 		$ch = $this->buildCurlResource((string) $url, $method, $post, $headers);
 		$result = curl_exec($ch);
 
+		// provide certificate if needed
+		if (curl_errno($ch) == CURLE_SSL_CACERT || curl_errno($ch) === CURLE_SSL_CACERT_BADFILE) {
+			Debugger::log('Invalid or no certificate authority found, using bundled information', 'github');
+			$this->curlOptions[CURLOPT_CAINFO] = __DIR__ . DIRECTORY_SEPARATOR . 'github_ca_chain_bundle.crt';
+			curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . DIRECTORY_SEPARATOR . 'github_ca_chain_bundle.crt');
+			$result = curl_exec($ch);
+		}
+
 		// With dual stacked DNS responses, it's possible for a server to
 		// have IPv6 enabled but not have IPv6 connectivity.  If this is
 		// the case, curl will try IPv4 first and if that fails, then it will
