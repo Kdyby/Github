@@ -44,6 +44,7 @@ class CurlClient extends Nette\Object
 		CURLINFO_HEADER_OUT => TRUE,
 		CURLOPT_HEADER => TRUE,
 		CURLOPT_AUTOREFERER => TRUE,
+		CURLOPT_SSL_VERIFYPEER => FALSE,
 	);
 
 	/**
