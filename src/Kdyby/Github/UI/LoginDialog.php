@@ -180,7 +180,7 @@ class LoginDialog extends Nette\Application\UI\Control
 	{
 		$this->client->getUser(); // check the received parameters and save user
 		$this->onResponse($this);
-		$this->presenter->redirect('this');
+		$this->presenter->redirect('this', array('state' => NULL, 'code' => NULL));
 	}
 
 }
