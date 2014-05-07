@@ -98,14 +98,53 @@ class Profile extends Nette\Object
 				}
 
 			} catch (\Exception $e) {
+				// todo: log?
 			}
 		}
 
 		if ($key !== NULL) {
+			if (empty($this->details[$key])) {
+				if ($key === 'email') {
+					$this->details['email'] = $this->getPrimaryEmail();
+				}
+			}
+
 			return isset($this->details[$key]) ? $this->details[$key] : NULL;
 		}
 
 		return $this->details;
+	}
+
+
+
+	/**
+	 * @return string|NULL
+	 */
+	public function getPrimaryEmail()
+	{
+		if ($this->profileId !== NULL) {
+			$this->getDetails();
+			return $this->details['email'];
+		}
+
+		try {
+			$emails = (array) $this->github->api('/user/emails');
+
+		} catch (\Exception $e) {
+			return NULL; // todo: log?
+		}
+
+
+		if (!count($emails)) {
+			return NULL;
+		}
+
+		usort($emails, function ($a, $b) {
+			$primary = $b->primary - $a->primary;
+			return $primary !== 0 ? $primary : ($b->verified - $a->verified);
+		});
+
+		return reset($emails)->email;
 	}
 
 }
