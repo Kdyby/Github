@@ -45,6 +45,11 @@ class Profile extends Nette\Object
 	 */
 	private $details;
 
+	/**
+	 * @var string
+	 */
+	private $primaryEmail;
+
 
 
 	/**
@@ -122,6 +127,10 @@ class Profile extends Nette\Object
 	 */
 	public function getPrimaryEmail()
 	{
+		if ($this->primaryEmail !== NULL) {
+			return $this->primaryEmail;
+		}
+
 		if ($this->profileId !== NULL) {
 			$this->getDetails();
 			return $this->details['email'];
@@ -134,7 +143,6 @@ class Profile extends Nette\Object
 			return NULL; // todo: log?
 		}
 
-
 		if (!count($emails)) {
 			return NULL;
 		}
@@ -144,7 +152,7 @@ class Profile extends Nette\Object
 			return $primary !== 0 ? $primary : ($b->verified - $a->verified);
 		});
 
-		return reset($emails)->email;
+		return $this->primaryEmail = reset($emails)->email;
 	}
 
 }
