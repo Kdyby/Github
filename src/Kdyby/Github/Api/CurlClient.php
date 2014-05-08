@@ -44,7 +44,6 @@ class CurlClient extends Nette\Object
 		CURLINFO_HEADER_OUT => TRUE,
 		CURLOPT_HEADER => TRUE,
 		CURLOPT_AUTOREFERER => TRUE,
-		CURLOPT_SSL_VERIFYPEER => FALSE,
 	);
 
 	/**
@@ -146,6 +145,21 @@ class CurlClient extends Nette\Object
 
 		$ch = $this->buildCurlResource((string) $url, $method, $post, $headers);
 		$result = curl_exec($ch);
+
+		// CURLE_SSL_CACERT
+		if (curl_errno($ch) == 60) {
+			Debugger::log('Invalid or no certificate authority found, using bundled information', 'github');
+
+			$this->curlOptions[CURLOPT_SSL_VERIFYPEER] = TRUE;
+			$this->curlOptions[CURLOPT_SSL_VERIFYHOST] = 2;
+			$this->curlOptions[CURLOPT_CAINFO] = dirname(__FILE__) . '/github_ca_chain_bundle.crt';
+
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+			curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__) . '/github_ca_chain_bundle.crt');
+
+			$result = curl_exec($ch);
+		}
 
 		// With dual stacked DNS responses, it's possible for a server to
 		// have IPv6 enabled but not have IPv6 connectivity.  If this is
@@ -309,6 +323,21 @@ class CurlClient extends Nette\Object
 	}
 
 
+	public static function getDefaultCurlOptions()
+	{
+		// Get default curl options
+		$curlOptions = self::$defaultCurlOptions;
+
+		// Check if certificate is available
+		if (is_file(__DIR__ .'/github.crt')) {
+			// Add github certificate path and verification options
+			$curlOptions[CURLOPT_SSL_VERIFYPEER]	= TRUE;
+			$curlOptions[CURLOPT_SSL_VERIFYHOST]	= 2;
+			$curlOptions[CURLOPT_CAINFO]			= __DIR__ .'/github.crt';
+		}
+
+		return $curlOptions;
+	}
 
 	private static function parseHeaders($raw)
 	{
