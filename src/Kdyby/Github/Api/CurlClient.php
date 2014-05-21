@@ -20,6 +20,10 @@ use Nette\Utils\Strings;
 
 
 
+if (!defined('CURLE_SSL_CACERT_BADFILE')) {
+	define('CURLE_SSL_CACERT_BADFILE', 77);
+}
+
 /**
  * @author Filip Procházka <filip@prochazka.su>
  *
