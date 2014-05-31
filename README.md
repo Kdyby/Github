@@ -32,4 +32,4 @@ Lear how to authenticate the user using Github's oauth or call Github's api in [
 
 -----
 
-Homepage [http://www.kdyby.org](http://www.kdyby.org) and repository [http://github.com/kdyby/github](http://github.com/kdyby/github).
+Homepage [http://www.kdyby.org](http://www.kdyby.org) and repository [http://github.com/Kdyby/Github](http://github.com/Kdyby/Github).
