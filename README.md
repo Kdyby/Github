@@ -1,5 +1,9 @@
-Kdyby/Github [![Build Status](https://secure.travis-ci.org/Kdyby/Github.png?branch=master)](http://travis-ci.org/Kdyby/Github)
-===========================
+Kdyby/Github
+======
+
+[![Build Status](https://travis-ci.org/Kdyby/Github.svg?branch=master)](https://travis-ci.org/Kdyby/Github)
+[![Downloads this Month](https://img.shields.io/packagist/dm/Kdyby/Github.svg)](https://packagist.org/packages/Kdyby/Github)
+[![Latest stable](img.shields.io/packagist/v/Kdyby/Github.svg)](https://packagist.org/packages/Kdyby/Github)
 
 Github API client with authorization for Nette Framework
 
