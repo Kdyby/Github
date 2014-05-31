@@ -1,6 +1,8 @@
 Kdyby/Github [![Build Status](https://secure.travis-ci.org/Kdyby/Github.png?branch=master)](http://travis-ci.org/Kdyby/Github)
 ===========================
 
+Github API client with authorization for Nette Framework
+
 
 Requirements
 ------------
