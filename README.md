@@ -7,7 +7,8 @@ Requirements
 
 Kdyby/Github requires PHP 5.3.2 or higher with cUrl extension enabled.
 
-- [Nette Framework 2.0.x](https://github.com/nette/nette)
+- [Nette Framework](https://github.com/nette/nette)
+- [Kdyby/CurlCaBundle](https://github.com/Kdyby/CurlCaBundle)
 
 
 Installation
@@ -16,8 +17,17 @@ Installation
 The best way to install Kdyby/Github is using  [Composer](http://getcomposer.org/):
 
 ```sh
-$ composer require kdyby/github:@dev
+$ composer require kdyby/github:~0.1
 ```
+
+For Nette `2.1` and newer is `~0.1`
+
+
+Documentation
+------------
+
+Lear how to authenticate the user using Github's oauth or call Github's api in [documentation](https://github.com/Kdyby/Github/blob/master/docs/en/index.md).
+
 
 
 -----
