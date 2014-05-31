@@ -14,7 +14,7 @@ Installation
 The best way to install Kdyby/Github is using  [Composer](http://getcomposer.org/):
 
 ```sh
-$ composer require kdyby/github:@dev
+$ composer require kdyby/github:~0.1
 ```
 
 With Nette 2.1 and newer, you can enable the extension using your neon config.
@@ -22,14 +22,6 @@ With Nette 2.1 and newer, you can enable the extension using your neon config.
 ```yml
 extensions:
 	github: Kdyby\Github\DI\GithubExtension
-```
-
-If you're using older Nette, you have to register it in `app/bootstrap.php`
-
-```php
-Kdyby\Github\DI\GithubExtension::register($configurator);
-
-return $configurator->createContainer();
 ```
 
 
