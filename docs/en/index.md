@@ -51,6 +51,15 @@ And that's all.
 
 
 
+Debugging
+---------
+
+The extension monitors all the api communication, when in debug mode. All that information is available in Tracy panel
+
+![panel](https://raw.githubusercontent.com/Kdyby/Github/a7ed69b59500aa81206f7dad6825055f8bb45fbe/docs/en/panel-screenshot.png)
+
+
+
 Authentication
 --------------
 
