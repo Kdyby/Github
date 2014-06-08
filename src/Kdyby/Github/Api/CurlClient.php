@@ -13,12 +13,16 @@ namespace Kdyby\Github\Api;
 use Kdyby\CurlCaBundle\CertificateHelper;
 use Kdyby\Github;
 use Nette;
-use Nette\Diagnostics\Debugger;
+use Tracy\Debugger;
 use Nette\Http\UrlScript;
 use Nette\Utils\Json;
 use Nette\Utils\Strings;
 
 
+
+if (!class_exists('Tracy\Debugger')) {
+	class_alias('Nette\Diagnostics\Debugger', 'Tracy\Debugger');
+}
 
 if (!defined('CURLE_SSL_CACERT_BADFILE')) {
 	define('CURLE_SSL_CACERT_BADFILE', 77);
