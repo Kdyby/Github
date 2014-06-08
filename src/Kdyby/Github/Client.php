@@ -30,6 +30,10 @@ if (!class_exists('Nette\Utils\ArrayHash')) {
 class Client extends Nette\Object
 {
 
+	const AUTH_URL_TOKEN = 'url_token';
+	const AUTH_URL_CLIENT_ID = 'url_client_id';
+	const AUTH_HTTP_PASSWORD = 'http_password';
+
 	/**
 	 * @var Api\CurlClient
 	 */
@@ -62,6 +66,12 @@ class Client extends Nette\Object
 	 * @var string
 	 */
 	protected $accessToken;
+
+	/**
+	 * Indicates the authorization method for next api call.
+	 * @var string
+	 */
+	protected $authorizeBy;
 
 
 
@@ -248,18 +258,96 @@ class Client extends Nette\Object
 			$method = 'GET';
 		}
 
-		if ($token = $this->getAccessToken()) {
+		list($params, $headers) = $this->authorizeRequest($params, $headers);
+		$url = $this->config->createUrl('api', $path, $params);
+		$result = $this->httpClient->makeRequest($url, $method, $post, $headers);
+
+		return is_array($result) ? ArrayHash::from($result) : $result;
+	}
+
+
+
+	protected function authorizeRequest($params, $headers)
+	{
+		if (isset($this->authorizeBy[self::AUTH_URL_CLIENT_ID])) {
+			$params['client_id'] = $this->config->appId;
+			$params['client_secret'] = $this->config->appSecret;
+
+		} elseif (isset($this->authorizeBy[self::AUTH_HTTP_PASSWORD])) {
+			list($login, $password) = $this->authorizeBy[self::AUTH_HTTP_PASSWORD];
+			$headers['Authorization'] = sprintf('Basic %s', base64_encode($login . ':' . $password));
+
+		} elseif (isset($this->authorizeBy[self::AUTH_URL_TOKEN])) {
+			$params['access_token'] = $this->getAccessToken();
+
+		} elseif ($token = $this->getAccessToken()) { // automatically sign by user's token if he's authorized
 			$headers['Authorization'] = 'token ' . $token;
 		}
 
-		$result = $this->httpClient->makeRequest(
-			$this->config->createUrl('api', $path, $params),
-			$method,
-			$post,
-			$headers
-		);
+		$this->authorizeBy = array();
 
-		return is_array($result) ? ArrayHash::from($result) : $result;
+		return array($params, $headers);
+	}
+
+
+
+	/**
+	 * The next request will contain parameter `access_token` in the url.
+	 *
+	 * <code>
+	 * $response = $client->authByUrlToken()->get('/users/whatever');
+	 * // will generate https://api.github.com/users/whatever?access_token=xxx
+	 * </code>
+	 *
+	 * Expects, that the user is authorized or that you've provided the `access_token` using
+	 *
+	 * <code>
+	 * $client->setAccessToken($token);
+	 * </code>
+	 *
+	 * @return Client
+	 */
+	public function authByUrlToken()
+	{
+		$this->authorizeBy = array(self::AUTH_URL_TOKEN => TRUE);
+		return $this;
+	}
+
+
+
+	/**
+	 * The next request will contain `client_id` and `client_secret` parameters,
+	 * that will be automatically fetched from your config.
+	 *
+	 * <code>
+	 * $response = $client->authByClientIdParameter()->get('/users/whatever');
+	 * // will generate https://api.github.com/users/whatever?client_id=xxx&client_secret=yyy
+	 * </code>
+	 *
+	 * @return Client
+	 */
+	public function authByClientIdParameter()
+	{
+		$this->authorizeBy = array(self::AUTH_URL_CLIENT_ID => TRUE);
+		return $this;
+	}
+
+
+
+	/**
+	 * The next request will be authorized by provided username and password.
+	 *
+	 * <code>
+	 * $response = $client->authByPassword('user', 'password')->get('/users/whatever');
+	 * // will generate https://user:password@api.github.com/users/whatever
+	 * </code>
+	 *
+	 * @return Client
+	 */
+	public function authByPassword($login, $password)
+	{
+		$this->authorizeBy = array(self::AUTH_HTTP_PASSWORD => array($login, $password));
+		return $this;
 	}
 
 
