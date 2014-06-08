@@ -223,6 +223,9 @@ class CurlClient extends Nette\Object
 				} elseif ($info['http_code'] === 422 && isset($response['errors'])) {
 					$e = new Github\ValidationFailedException('Validation Failed: ' . self::parseErrors($response), $info['http_code'], $e);
 
+				} elseif ($info['http_code'] === 404 && isset($response['message'])) {
+					$e = new Github\UnknownResourceException($response['message'] . ': ' . $info['url'], $info['http_code'], $e);
+
 				} elseif (isset($response['message'])) {
 					$e = new Github\ApiException($response['message'], $info['http_code'], $e);
 				}

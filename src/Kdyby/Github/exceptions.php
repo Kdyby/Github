@@ -110,3 +110,13 @@ class BadRequestException extends ApiException
 {
 
 }
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class UnknownResourceException extends ApiException
+{
+
+}
