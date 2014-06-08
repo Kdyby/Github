@@ -10,12 +10,12 @@
 
 namespace Kdyby\Github\Diagnostics;
 
-use Guzzle\Common\Event;
 use Kdyby\Github\Api\CurlClient;
-use Kdyby\Github\Api\HttpClient;
 use Kdyby\Github\ApiException;
 use Nette;
 use Nette\Utils\Html;
+use Tracy\Bar;
+use Tracy\BlueScreen;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
 
@@ -172,8 +172,8 @@ class Panel extends Nette\Object implements IBarPanel
 		$client->onError[] = $this->failure;
 		$client->onSuccess[] = $this->success;
 
-		Debugger::getBar()->addPanel($this);
-		Debugger::getBlueScreen()->addPanel(array($this, 'renderException'));
+		self::getPanel()->addPanel($this);
+		self::getDebuggerBlueScreen()->addPanel(array($this, 'renderException'));
 	}
 
 
@@ -243,6 +243,26 @@ class Panel extends Nette\Object implements IBarPanel
 		}
 
 		return $renamed;
+	}
+
+
+
+	/**
+	 * @return Bar
+	 */
+	private static function getDebuggerBar()
+	{
+		return method_exists('Tracy\Debugger', 'getBar') ? Debugger::getBar() : Debugger::$bar;
+	}
+
+
+
+	/**
+	 * @return BlueScreen
+	 */
+	private static function getDebuggerBlueScreen()
+	{
+		return method_exists('Tracy\Debugger', 'getBlueScreen') ? Debugger::getBlueScreen() : Debugger::$blueScreen;
 	}
 
 }
