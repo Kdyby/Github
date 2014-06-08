@@ -10,7 +10,6 @@
 
 namespace Kdyby\Github;
 
-use Github;
 use Kdyby;
 use Nette;
 use Nette\Utils\ArrayHash;
@@ -157,7 +156,7 @@ class Client extends Nette\Object
 	 */
 	public function get($path, array $params = array(), array $headers = array())
 	{
-		return $this->api($path, 'GET', $params, array(), $headers);
+		return $this->api($path, Api\Request::GET, $params, array(), $headers);
 	}
 
 
@@ -171,7 +170,7 @@ class Client extends Nette\Object
 	 */
 	public function head($path, array $params = array(), array $headers = array())
 	{
-		return $this->api($path, 'HEAD', $params, array(), $headers);
+		return $this->api($path, Api\Request::HEAD, $params, array(), $headers);
 	}
 
 
@@ -186,7 +185,7 @@ class Client extends Nette\Object
 	 */
 	public function post($path, array $params = array(), $post = array(), array $headers = array())
 	{
-		return $this->api($path, 'POST', $params, $post, $headers);
+		return $this->api($path, Api\Request::POST, $params, $post, $headers);
 	}
 
 
@@ -201,7 +200,7 @@ class Client extends Nette\Object
 	 */
 	public function patch($path, array $params = array(), $post = array(), array $headers = array())
 	{
-		return $this->api($path, 'PATCH', $params, $post, $headers);
+		return $this->api($path, Api\Request::PATCH, $params, $post, $headers);
 	}
 
 
@@ -216,7 +215,7 @@ class Client extends Nette\Object
 	 */
 	public function put($path, array $params = array(), $post = array(), array $headers = array())
 	{
-		return $this->api($path, 'PUT', $params, $post, $headers);
+		return $this->api($path, Api\Request::PUT, $params, $post, $headers);
 	}
 
 
@@ -230,7 +229,7 @@ class Client extends Nette\Object
 	 */
 	public function delete($path, array $params = array(), array $headers = array())
 	{
-		return $this->api($path, 'DELETE', $params, array(), $headers);
+		return $this->api($path, Api\Request::DELETE, $params, array(), $headers);
 	}
 
 
@@ -249,25 +248,25 @@ class Client extends Nette\Object
 	 * @throws ApiException
 	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
-	public function api($path, $method = 'GET', array $params = array(), $post = array(), array $headers = array())
+	public function api($path, $method = Api\Request::GET, array $params = array(), $post = array(), array $headers = array())
 	{
 		if (is_array($method)) {
 			$headers = $post;
 			$post = $params;
 			$params = $method;
-			$method = 'GET';
+			$method = Api\Request::GET;
 		}
 
 		list($params, $headers) = $this->authorizeRequest($params, $headers);
-		$url = $this->buildRequestUrl($path, $params);
-		$result = $this->httpClient->makeRequest($url, $method, $post, $headers);
+		$response = $this->httpClient->makeRequest(
+			new Api\Request($this->buildRequestUrl($path, $params), $method, $post, $headers)
+		);
 
-		$responseHeaders = $this->httpClient->getLastResponseHeaders();
-		if ($method === 'GET' && (isset($params['per_page']) || isset($params['page']) || isset($responseHeaders['Link']))) {
-			return new Paginator($this, $result);
+		if ($response->isPaginated()) {
+			return new Paginator($this, $response);
 		}
 
-		return is_array($result) ? ArrayHash::from($result) : $result;
+		return $response->isJson() ? ArrayHash::from($response->toArray()) : $response->getContent();
 	}
 
 
@@ -310,6 +309,12 @@ class Client extends Nette\Object
 	 */
 	protected function buildRequestUrl($path, $params)
 	{
+		if (($q = stripos($path, '?')) !== FALSE) {
+			$query = substr($path, $q + 1);
+			parse_str($query, $params);
+			$path = substr($path, 0, $q);
+		}
+
 		$url = $this->config->createUrl('api', $path, $params);
 		if (substr_count($url->path, ':') === 0) { // no parameters
 			return $url;
@@ -579,21 +584,19 @@ class Client extends Nette\Object
 		}
 
 		try {
-			$response = $this->httpClient->makeRequest(
-				$this->config->createUrl('oauth', 'access_token', array(
-					'client_id' => $this->config->appId,
-					'client_secret' => $this->config->appSecret,
-					'code' => $code,
-					'redirect_uri' => $redirectUri,
-				)),
-				'GET',
-				array(),
-				array('Accept' => 'application/json')
-			);
+			$url = $this->config->createUrl('oauth', 'access_token', array(
+				'client_id' => $this->config->appId,
+				'client_secret' => $this->config->appSecret,
+				'code' => $code,
+				'redirect_uri' => $redirectUri,
+			));
 
-			if (empty($response) || !is_array($response)) {
+			$response = $this->httpClient->makeRequest(new Api\Request($url, Api\Request::POST, array(), array('Accept' => 'application/json')));
+			if (!$response->isOk() || !$response->isJson()) {
 				return FALSE;
 			}
+
+			$token = $response->toArray();
 
 		} catch (\Exception $e) {
 			// most likely that user very recently revoked authorization.
@@ -601,7 +604,7 @@ class Client extends Nette\Object
 			return FALSE;
 		}
 
-		return isset($response['access_token']) ? $response['access_token'] : FALSE;
+		return isset($token['access_token']) ? $token['access_token'] : FALSE;
 	}
 
 

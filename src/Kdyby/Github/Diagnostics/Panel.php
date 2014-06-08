@@ -10,7 +10,7 @@
 
 namespace Kdyby\Github\Diagnostics;
 
-use Kdyby\Github\Api\CurlClient;
+use Kdyby\Github\Api;
 use Kdyby\Github\ApiException;
 use Nette;
 use Nette\Utils\Html;
@@ -55,11 +55,6 @@ class Panel extends Nette\Object implements IBarPanel
 	 * @var array
 	 */
 	private $calls = array();
-
-	/**
-	 * @var \stdClass
-	 */
-	private $current;
 
 
 
@@ -106,20 +101,17 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 	/**
-	 * @param string|object $url
+	 * @param Api\Request $request
 	 * @param array $options
 	 */
-	public function begin($url, array $options)
+	public function begin(Api\Request $request, $options = array())
 	{
-		if ($this->current) {return;}
-
-		$url = new Nette\Http\Url($url);
-		@parse_str($url->getQuery(), $params);
+		$url = $request->getUrl();
 		$url->setQuery('');
 
-		$this->calls[] = $this->current = (object) array(
+		$this->calls[spl_object_hash($request)] = (object) array(
 			'url' => (string) $url,
-			'params' => $params,
+			'params' => $request->getParameters(),
 			'options' => self::toConstantNames($options),
 			'result' => NULL,
 			'exception' => NULL,
@@ -131,42 +123,50 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 	/**
-	 * @param mixed $result
-	 * @param array $curlInfo
+	 * @param Api\Response $response
 	 */
-	public function success($result, array $curlInfo)
+	public function success(Api\Response $response)
 	{
-		if (!$this->current) {return;}
-		$this->totalTime += $this->current->time = $curlInfo['total_time'];
-		unset($curlInfo['total_time']);
-		$this->current->info = $curlInfo;
-		$this->current->result = $result;
-		$this->current = NULL;
+		if (!isset($this->calls[$oid = spl_object_hash($response->getRequest())])) {
+			return;
+		}
+
+		$debugInfo = $response->debugInfo;
+
+		$current = $this->calls[$oid];
+		$this->totalTime += $current->time = $debugInfo['total_time'];
+		unset($debugInfo['total_time']);
+		$current->info = $debugInfo;
+		$current->result = $response->toArray() ?: $response->getContent();
 	}
 
 
 
 	/**
 	 * @param \Exception $exception
-	 * @param array $curlInfo
+	 * @param \Kdyby\Github\Api\Response $response
 	 */
-	public function failure(\Exception $exception, array $curlInfo)
+	public function failure(\Exception $exception, Api\Response $response)
 	{
-		if (!$this->current) {return;}
-		$this->totalTime += $this->current->time = $curlInfo['total_time'];
-		unset($curlInfo['total_time']);
-		$this->current->info = $curlInfo;
-		$this->current->exception = $exception;
+		if (!isset($this->calls[$oid = spl_object_hash($response->getRequest())])) {
+			return;
+		}
 
-		$this->current = NULL;
+		$debugInfo = $response->debugInfo;
+
+		$current = $this->calls[$oid];
+		$this->totalTime += $current->time = $debugInfo['total_time'];
+		unset($debugInfo['total_time']);
+		$current->info = $debugInfo;
+		$current->exception = $exception;
 	}
 
 
 
 	/**
-	 * @param CurlClient $client
+	 * @param Api\CurlClient $client
 	 */
-	public function register(CurlClient $client)
+	public function register(Api\CurlClient $client)
 	{
 		$client->onRequest[] = $this->begin;
 		$client->onError[] = $this->failure;
@@ -180,7 +180,7 @@ class Panel extends Nette\Object implements IBarPanel
 
 	public function renderException(\Exception $e = NULL)
 	{
-		if (!$e instanceof ApiException || !$e->curlInfo) {
+		if (!$e instanceof ApiException || !$e->response) {
 			return NULL;
 		}
 
@@ -199,16 +199,16 @@ class Panel extends Nette\Object implements IBarPanel
 		$panel = '';
 
 		$panel .= '<p><b>Request</b></p><div><pre><code>';
-		$panel .= $serializeHeaders($e->curlInfo['request_header']);
-		if (!in_array($e->curlInfo['method'], array('GET', 'HEAD'))) {
-			$panel .= '<br>' . $h(is_array($e->requestBody) ? json_encode($e->requestBody) : $e->requestBody);
+		$panel .= $serializeHeaders($e->request->getHeaders());
+		if (!in_array($e->request->getMethod(), array('GET', 'HEAD'))) {
+			$panel .= '<br>' . $h(is_array($e->request->getPost()) ? json_encode($e->request->getPost()) : $e->request->getPost());
 		}
 		$panel .= '</code></pre></div>';
 
 		$panel .= '<p><b>Response</b></p><div><pre><code>';
-		$panel .= $serializeHeaders($e->curlInfo['headers'][0]);
-		if ($e->responseBody) {
-			$panel .= '<br>' . $h($e->responseBody);
+		$panel .= $serializeHeaders($e->response->getHeaders());
+		if ($e->response->getContent()) {
+			$panel .= '<br>' . $h($e->response->toArray() ?: $e->response->getContent());
 		}
 		$panel .= '</code></pre></div>';
 

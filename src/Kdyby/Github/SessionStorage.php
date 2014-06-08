@@ -11,7 +11,6 @@
 namespace Kdyby\Github;
 
 use Nette;
-use Nette\Diagnostics\Debugger;
 
 
 

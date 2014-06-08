@@ -14,8 +14,6 @@ use Kdyby\CurlCaBundle\CertificateHelper;
 use Kdyby\Github;
 use Nette;
 use Tracy\Debugger;
-use Nette\Http\UrlScript;
-use Nette\Utils\Json;
 use Nette\Utils\Strings;
 
 
@@ -31,11 +29,11 @@ if (!defined('CURLE_SSL_CACERT_BADFILE')) {
 /**
  * @author Filip Procházka <filip@prochazka.su>
  *
- * @method onRequest($url, $params)
- * @method onError(Github\Exception $e, array $info)
- * @method onSuccess(array $result, array $info)
+ * @method onRequest(Request $request, $options)
+ * @method onError(Github\Exception $e, Response $response)
+ * @method onSuccess(Response $response)
  */
-class CurlClient extends Nette\Object
+class CurlClient extends Nette\Object implements Github\HttpClient
 {
 
 	/**
@@ -62,17 +60,17 @@ class CurlClient extends Nette\Object
 	public $curlOptions = array();
 
 	/**
-	 * @var array of function($url, $params)
+	 * @var array of function(Request $request, $options)
 	 */
 	public $onRequest = array();
 
 	/**
-	 * @var array of function(Github\Exception $e, array $info)
+	 * @var array of function(Github\Exception $e, Response $response)
 	 */
 	public $onError = array();
 
 	/**
-	 * @var array of function(array $result, array $info)
+	 * @var array of function(Response $response)
 	 */
 	public $onSuccess = array();
 
@@ -90,16 +88,6 @@ class CurlClient extends Nette\Object
 	 * @var array
 	 */
 	private $memoryCache = array();
-
-	/**
-	 * @var array|string
-	 */
-	private $lastResponse;
-
-	/**
-	 * @var array
-	 */
-	private $lastResponseInfo;
 
 
 
@@ -126,33 +114,17 @@ class CurlClient extends Nette\Object
 	 * developers want to do fancier things or use something other than curl to
 	 * make the request.
 	 *
-	 * @param Nette\Http\Url $url The URL to make the request to
-	 * @param string $method
-	 * @param array|string $post The parameters to use for the POST body
-	 * @param array $headers
-	 *
+	 * @param Request $request
 	 * @throws Github\ApiException
-	 * @return string|array The response text or parsed JSON to array
+	 * @return Response
 	 */
-	public function makeRequest(Nette\Http\Url $url, $method = 'GET', $post = array(), array $headers = array())
+	public function makeRequest(Request $request)
 	{
-		if (isset($this->memoryCache[$cacheKey = md5(serialize(func_get_args()))])) {
+		if (isset($this->memoryCache[$cacheKey = md5(serialize($request))])) {
 			return $this->memoryCache[$cacheKey];
 		}
 
-		// json_encode all params values that are not strings
-		$post = is_array($post) ? array_map(function ($value) {
-			if ($value instanceof UrlScript) {
-				return (string) $value;
-
-			} elseif ($value instanceof \CURLFile) {
-				return $value;
-			}
-
-			return !is_string($value) ? Json::encode($value) : $value;
-		}, $post) : $post;
-
-		$ch = $this->buildCurlResource((string) $url, $method, $post, $headers);
+		$ch = $this->buildCurlResource($request);
 		$result = curl_exec($ch);
 
 		// provide certificate if needed
@@ -186,166 +158,71 @@ class CurlClient extends Nette\Object
 		}
 		$info['method'] = isset($post['method']) ? $post['method']: 'GET';
 		$info['headers'] = self::parseHeaders(substr($result, 0, $info['header_size']));
+		$info['error'] = $result === FALSE ? array('message' => curl_error($ch), 'code' => curl_errno($ch)) : array();
 
-		$this->lastResponseInfo = $info;
-		$this->lastResponse = $result = substr($result, $info['header_size']);
+		$request->setHeaders($info['request_header']);
+		$response = new Response($request, substr($result, $info['header_size']), $info['http_code'], end($info['headers']), $info);
 
-		if (isset($info['headers'][0]['X-RateLimit-Remaining'])) {
-			$remaining = $info['headers'][0]['X-RateLimit-Remaining'];
-			$limit = isset($info['headers'][0]['X-RateLimit-Limit']) ? $info['headers'][0]['X-RateLimit-Limit'] : 5000;
-
-			if ($remaining <= 0) {
-				$e = new Github\ApiLimitExceedException("The api limit of $limit has been exceeded");
-				$e->bindRequest($post, $result, $info);
-				curl_close($ch);
-				$this->onError($e, $info);
-				throw $e;
-			}
-		}
-
-		$response = array();
-		try {
-			$this->lastResponse = $response = Json::decode($result, Json::FORCE_ARRAY);
-
-		} catch (Nette\Utils\JsonException $jsonException) {
-			if (isset($info['headers'][0]['Content-Type']) && preg_match('~^application/json;.*~is', $info['headers'][0]['Content-Type'])) {
-				$e = new Github\ApiException($jsonException->getMessage() . (isset($response) ? "\n\n" . $response : ''), $info['http_code']);
-				$e->bindRequest($post, $result, $info);
-				curl_close($ch);
-				$this->onError($e, $info);
-				throw $e;
-			}
-		}
-
-		if ($info['http_code'] >= 300 || $result === FALSE) {
-			$e = new Github\RequestFailedException(curl_error($ch), curl_errno($ch));
-
-			if ($result) {
-				if ($info['http_code'] === 400) {
-					$e = new Github\BadRequestException(isset($response['message']) ? $response['message'] : $result, $info['http_code'], $e);
-
-				} elseif ($info['http_code'] === 422 && isset($response['errors'])) {
-					$e = new Github\ValidationFailedException('Validation Failed: ' . self::parseErrors($response), $info['http_code'], $e);
-
-				} elseif ($info['http_code'] === 404 && isset($response['message'])) {
-					$e = new Github\UnknownResourceException($response['message'] . ': ' . $info['url'], $info['http_code'], $e);
-
-				} elseif (isset($response['message'])) {
-					$e = new Github\ApiException($response['message'], $info['http_code'], $e);
-				}
-			}
-
-			$e->bindRequest($post, $result, $info);
+		if (!$response->hasRemainingRateLimit()) {
+			$e = new Github\ApiLimitExceedException("The api limit of {$response->getRateLimit()} has been exceeded");
+			$e->bindResponse($request, $response);
 			curl_close($ch);
-			$this->onError($e, $info);
+			$this->onError($e, $response);
 			throw $e;
 		}
 
-		$this->onSuccess($this->lastResponse, $info);
-		curl_close($ch);
-
-		return $this->memoryCache[$cacheKey] = $this->lastResponse;
-	}
-
-
-
-	/**
-	 * @return array|string
-	 */
-	public function getLastResponse()
-	{
-		return $this->lastResponse;
-	}
-
-
-
-	/**
-	 * @return int
-	 */
-	public function getLastResponseHttpCode()
-	{
-		return $this->lastResponseInfo['http_code'];
-	}
-
-
-
-	/**
-	 * @return array
-	 */
-	public function getLastResponseHeaders()
-	{
-		return end($this->lastResponseInfo['headers']);
-	}
-
-
-
-	/**
-	 * @return array
-	 */
-	public function getLastRequestHeaders()
-	{
-		return isset($this->lastResponseInfo['request_header']) ? $this->lastResponseInfo['request_header'] : array();
-	}
-
-
-
-	/**
-	 * @return array
-	 */
-	public function getLastRequestParameters()
-	{
-		if (!isset($this->lastResponseInfo['url'])) {
-			return array();
+		if (!$response->isOk()) {
+			$e = $response->toException();
+			curl_close($ch);
+			$this->onError($e, $response);
+			throw $e;
 		}
 
-		$url = new Nette\Http\Url($this->lastResponseInfo['url']);
-		parse_str($url->getQuery(), $params);
+		$this->onSuccess($response);
+		curl_close($ch);
 
-		return $params;
+		return $this->memoryCache[$cacheKey] = $response;
 	}
 
 
 
 	/**
-	 * @param string $url
-	 * @param string $method
-	 * @param array $post
-	 * @param array $headers
+	 * @param Request $request
 	 * @return resource
 	 */
-	protected function buildCurlResource($url, $method, $post, array $headers)
+	protected function buildCurlResource(Request $request)
 	{
-		$ch = curl_init($url);
+		$ch = curl_init((string) $request->getUrl());
 		$options = $this->curlOptions;
+		$options[CURLOPT_CUSTOMREQUEST] = $request->getMethod();
 
 		// configuring a POST request
-		if ($post || $method === 'POST') {
-			$options[CURLOPT_POSTFIELDS] = $post;
-			$options[CURLOPT_POST] = TRUE;
+		if ($request->getPost()) {
+			$options[CURLOPT_POSTFIELDS] = $request->getPost();
+		}
 
-		} elseif ($method === 'HEAD') {
+		if ($request->isHead()) {
 			$options[CURLOPT_NOBODY] = TRUE;
 
-		} elseif ($method === 'GET') {
+		} elseif ($request->isGet()) {
 			$options[CURLOPT_HTTPGET] = TRUE;
 
-		} else {
-			$options[CURLOPT_CUSTOMREQUEST] = strtoupper($method);
+		} elseif ($request->isPost()) {
+			$options[CURLOPT_POST] = TRUE;
 		}
 
 		// disable the 'Expect: 100-continue' behaviour. This causes CURL to wait
 		// for 2 seconds if the server does not support this header.
 		$options[CURLOPT_HTTPHEADER]['Expect'] = '';
 		$tmp = array();
-		foreach ($headers + $options[CURLOPT_HTTPHEADER] as $name => $value) {
+		foreach ($request->getHeaders() + $options[CURLOPT_HTTPHEADER] as $name => $value) {
 			$tmp[] = trim("$name: $value");
 		}
 		$options[CURLOPT_HTTPHEADER] = $tmp;
 
 		// execute request
 		curl_setopt_array($ch, $options);
-
-		$this->onRequest($url, $options);
+		$this->onRequest($request, $options);
 
 		return $ch;
 	}
@@ -373,38 +250,6 @@ class CurlClient extends Nette\Object
 		}
 
 		return $headers;
-	}
-
-
-
-	private static function parseErrors(array $response)
-	{
-		$errors = array();
-		foreach ($response['errors'] as $error) {
-			switch ($error['code']) {
-				case 'missing':
-					$errors[] = sprintf('The %s %s does not exist, for resource "%s"', $error['field'], $error['value'], $error['resource']);
-					break;
-
-				case 'missing_field':
-					$errors[] = sprintf('Field "%s" is missing, for resource "%s"', $error['field'], $error['resource']);
-					break;
-
-				case 'invalid':
-					$errors[] = sprintf('Field "%s" is invalid, for resource "%s"', $error['field'], $error['resource']);
-					break;
-
-				case 'already_exists':
-					$errors[] = sprintf('Field "%s" already exists, for resource "%s"', $error['field'], $error['resource']);
-					break;
-
-				default:
-					$errors[] = $error['message'];
-					break;
-			}
-		}
-
-		return implode(', ', $errors);
 	}
 
 }

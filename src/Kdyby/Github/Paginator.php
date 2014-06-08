@@ -47,17 +47,12 @@ class Paginator extends Nette\Object implements \Iterator
 	/**
 	 * @var array
 	 */
-	private $requestHeaders;
+	private $resources = array();
 
 	/**
-	 * @var array
+	 * @var Api\Response[]
 	 */
-	private $responseBody = array();
-
-	/**
-	 * @var array
-	 */
-	private $responseLinkHeader = array();
+	private $responses = array();
 
 	/**
 	 * @var int
@@ -71,21 +66,17 @@ class Paginator extends Nette\Object implements \Iterator
 
 
 
-	public function __construct(Client $client, $resource)
+	public function __construct(Client $client, Api\Response $response)
 	{
 		$this->httpClient = $client->getHttpClient();
+		$resource = $response->toArray();
 
-		$params = $this->httpClient->getLastRequestParameters();
+		$params = $response->request->getParameters();
 		$this->firstPage = isset($params['page']) ? (int) max($params['page'], 1) : 1;
 		$this->perPage = isset($params['per_page']) ? (int) $params['per_page'] : count($resource);
 
-		$responseHeaders = $this->httpClient->getLastResponseHeaders();
-		$this->responseLinkHeader[$this->firstPage] = isset($responseHeaders['Link']) ? self::parseLinkHeader($responseHeaders['Link']) : NULL;
-		$this->responseBody[$this->firstPage] = $resource;
-
-		$requestHeaders = $this->httpClient->getLastRequestHeaders();
-		array_shift($requestHeaders); // drop info about HTTP version
-		$this->requestHeaders = $requestHeaders;
+		$this->responses[$this->firstPage] = $response;
+		$this->resources[$this->firstPage] = $resource;
 	}
 
 
@@ -115,7 +106,7 @@ class Paginator extends Nette\Object implements \Iterator
 
 	public function valid()
 	{
-		return isset($this->responseBody[$this->pageCursor][$this->itemCursor])
+		return isset($this->resources[$this->pageCursor][$this->itemCursor])
 			&& $this->maxResults > ($this->itemCursor + ($this->pageCursor - $this->firstPage) * $this->perPage);
 	}
 
@@ -127,7 +118,7 @@ class Paginator extends Nette\Object implements \Iterator
 			return NULL;
 		}
 
-		return Nette\Utils\ArrayHash::from($this->responseBody[$this->pageCursor][$this->itemCursor]);
+		return Nette\Utils\ArrayHash::from($this->resources[$this->pageCursor][$this->itemCursor]);
 	}
 
 
@@ -141,25 +132,24 @@ class Paginator extends Nette\Object implements \Iterator
 			return;
 		}
 
-		if (isset($this->responseBody[$this->pageCursor + 1])) { // already loaded
+		if (isset($this->resources[$this->pageCursor + 1])) { // already loaded
 			$this->itemCursor = 0;
 			$this->pageCursor++;
 			return;
 		}
 
-		if (!isset($this->responseLinkHeader[$this->pageCursor]['next'])) {
+		if (!$nextPage = $this->responses[$this->pageCursor]->getPaginationLink('next')) {
 			return; // end
 		}
 
-		$nextPage = new Nette\Http\UrlScript($this->responseLinkHeader[$this->pageCursor]['next']);
 		try {
-			$response = $this->httpClient->makeRequest($nextPage, 'GET', array(), $this->requestHeaders);
-			$responseHeaders = $this->httpClient->getLastResponseHeaders();
+			$prevRequest = $this->responses[$this->pageCursor]->getRequest();
+			$response = $this->httpClient->makeRequest($prevRequest->copyWithUrl($nextPage));
 
 			$this->itemCursor = 0;
 			$this->pageCursor++;
-			$this->responseLinkHeader[$this->pageCursor] = isset($responseHeaders['Link']) ? self::parseLinkHeader($responseHeaders['Link']) : NULL;
-			$this->responseBody[$this->pageCursor] = $response;
+			$this->responses[$this->pageCursor] = $response;
+			$this->resources[$this->pageCursor] = $response->toArray();
 
 		} catch (\Exception $e) {
 			$this->itemCursor--; // revert back so the user can continue if needed
@@ -171,26 +161,6 @@ class Paginator extends Nette\Object implements \Iterator
 	public function key()
 	{
 		return $this->itemCursor + ($this->pageCursor - 1) * $this->perPage;
-	}
-
-
-
-	/**
-	 * @see https://developer.github.com/guides/traversing-with-pagination/#navigating-through-the-pages
-	 * @param string $header
-	 * @return array
-	 */
-	protected static function parseLinkHeader($header)
-	{
-		// <https://api.github.com/user/repos?page=2&per_page=10>; rel="next", <https://api.github.com/user/repos?page=8&per_page=10>; rel="last"
-		$links = array();
-
-		foreach (Nette\Utils\Strings::matchAll($header, '~<(?P<link>[^>]+)>;\s*rel="(?P<rel>[\w]+)"~i') as $match) {
-			$links[$match['rel']] = $match['link'];
-		}
-
-
-		return $links + array('next' => NULL, 'prev' => NULL);
 	}
 
 }

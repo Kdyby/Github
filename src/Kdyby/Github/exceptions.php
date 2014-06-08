@@ -49,23 +49,25 @@ class NotSupportedException extends \LogicException implements Exception
 class ApiException extends \RuntimeException implements Exception
 {
 
-	public $curlInfo = array();
-	public $requestBody;
-	public $responseBody;
+	/**
+	 * @var Api\Request|NULL
+	 */
+	public $request;
+
+	/**
+	 * @var Api\Response|NULL
+	 */
+	public $response;
 
 
 
 	/**
-	 * @param string $request
-	 * @param string $response
-	 * @param array $info
-	 * @return static
+	 * @return ApiException|static
 	 */
-	public function bindRequest($request, $response, $info)
+	public function bindResponse(Api\Request $request, Api\Response $response = NULL)
 	{
-		$this->curlInfo = $info;
-		$this->requestBody = $request;
-		$this->responseBody = $response;
+		$this->request = $request;
+		$this->response = $response;
 		return $this;
 	}
 

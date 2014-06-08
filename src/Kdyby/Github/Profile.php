@@ -10,7 +10,6 @@
 
 namespace Kdyby\Github;
 
-use Github\Api\CurrentUser;
 use Kdyby;
 use Nette;
 use Nette\Utils\ArrayHash;
