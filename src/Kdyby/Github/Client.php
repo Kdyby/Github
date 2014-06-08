@@ -139,6 +139,93 @@ class Client extends Nette\Object
 
 
 	/**
+	 * @param string $path
+	 * @param array $params
+	 * @param array $headers
+	 * @throws ApiException
+	 * @return ArrayHash|string
+	 */
+	public function get($path, array $params = array(), array $headers = array())
+	{
+		return $this->api($path, 'GET', $params, array(), $headers);
+	}
+
+
+
+	/**
+	 * @param string $path
+	 * @param array $params
+	 * @param array $headers
+	 * @throws ApiException
+	 * @return ArrayHash|string
+	 */
+	public function head($path, array $params = array(), array $headers = array())
+	{
+		return $this->api($path, 'HEAD', $params, array(), $headers);
+	}
+
+
+
+	/**
+	 * @param string $path
+	 * @param array $params
+	 * @param array|string $post
+	 * @param array $headers
+	 * @throws ApiException
+	 * @return ArrayHash|string
+	 */
+	public function post($path, array $params = array(), $post = array(), array $headers = array())
+	{
+		return $this->api($path, 'POST', $params, $post, $headers);
+	}
+
+
+
+	/**
+	 * @param string $path
+	 * @param array $params
+	 * @param array|string $post
+	 * @param array $headers
+	 * @throws ApiException
+	 * @return ArrayHash|string
+	 */
+	public function patch($path, array $params = array(), $post = array(), array $headers = array())
+	{
+		return $this->api($path, 'PATCH', $params, $post, $headers);
+	}
+
+
+
+	/**
+	 * @param string $path
+	 * @param array $params
+	 * @param array|string $post
+	 * @param array $headers
+	 * @throws ApiException
+	 * @return ArrayHash|string
+	 */
+	public function put($path, array $params = array(), $post = array(), array $headers = array())
+	{
+		return $this->api($path, 'PUT', $params, $post, $headers);
+	}
+
+
+
+	/**
+	 * @param string $path
+	 * @param array $params
+	 * @param array $headers
+	 * @throws ApiException
+	 * @return ArrayHash|string
+	 */
+	public function delete($path, array $params = array(), array $headers = array())
+	{
+		return $this->api($path, 'DELETE', $params, array(), $headers);
+	}
+
+
+
+	/**
 	 * Simply pass anything starting with a slash and it will call the Api, for example
 	 * <code>
 	 * $details = $github->api('/user');
