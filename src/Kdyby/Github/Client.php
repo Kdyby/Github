@@ -147,12 +147,12 @@ class Client extends Nette\Object
 	 * @param string $path
 	 * @param string $method The argument is optional
 	 * @param array $params Query parameters
-	 * @param array $post Post request parameters or body to send
+	 * @param array|string $post Post request parameters or body to send
 	 * @param array $headers Http request headers
 	 * @throws ApiException
 	 * @return ArrayHash|string
 	 */
-	public function api($path, $method = 'GET', array $params = array(), array $post = array(), array $headers = array())
+	public function api($path, $method = 'GET', array $params = array(), $post = array(), array $headers = array())
 	{
 		if (is_array($method)) {
 			$headers = $post;

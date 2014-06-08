@@ -124,20 +124,20 @@ class CurlClient extends Nette\Object
 	 *
 	 * @param Nette\Http\Url $url The URL to make the request to
 	 * @param string $method
-	 * @param array $post The parameters to use for the POST body
+	 * @param array|string $post The parameters to use for the POST body
 	 * @param array $headers
 	 *
 	 * @throws Github\ApiException
 	 * @return string The response text
 	 */
-	public function makeRequest(Nette\Http\Url $url, $method = 'GET', array $post = array(), array $headers = array())
+	public function makeRequest(Nette\Http\Url $url, $method = 'GET', $post = array(), array $headers = array())
 	{
 		if (isset($this->memoryCache[$cacheKey = md5(serialize(func_get_args()))])) {
 			return $this->memoryCache[$cacheKey];
 		}
 
 		// json_encode all params values that are not strings
-		$post = array_map(function ($value) {
+		$post = is_array($post) ? array_map(function ($value) {
 			if ($value instanceof UrlScript) {
 				return (string) $value;
 
@@ -146,7 +146,7 @@ class CurlClient extends Nette\Object
 			}
 
 			return !is_string($value) ? Json::encode($value) : $value;
-		}, $post);
+		}, $post) : $post;
 
 		$ch = $this->buildCurlResource((string) $url, $method, $post, $headers);
 		$result = curl_exec($ch);
@@ -292,7 +292,7 @@ class CurlClient extends Nette\Object
 	 * @param array $headers
 	 * @return resource
 	 */
-	protected function buildCurlResource($url, $method, array $post, array $headers)
+	protected function buildCurlResource($url, $method, $post, array $headers)
 	{
 		$ch = curl_init($url);
 		$options = $this->curlOptions;
