@@ -163,14 +163,6 @@ class CurlClient extends Nette\Object implements Github\HttpClient
 		$request->setHeaders($info['request_header']);
 		$response = new Response($request, substr($result, $info['header_size']), $info['http_code'], end($info['headers']), $info);
 
-		if (!$response->hasRemainingRateLimit()) {
-			$e = new Github\ApiLimitExceedException("The api limit of {$response->getRateLimit()} has been exceeded");
-			$e->bindResponse($request, $response);
-			curl_close($ch);
-			$this->onError($e, $response);
-			throw $e;
-		}
-
 		if (!$response->isOk()) {
 			$e = $response->toException();
 			curl_close($ch);

@@ -169,6 +169,9 @@ class Response extends Nette\Object
 
 
 
+	/**
+	 * @return Github\ApiException|static
+	 */
 	public function toException()
 	{
 		if ($this->httpCode < 300 && $this->content !== FALSE) {
@@ -181,7 +184,10 @@ class Response extends Nette\Object
 			$error ? (int) $error['code'] : 0
 		);
 
-		if ($this->content && $this->isJson()) {
+		if (!$this->hasRemainingRateLimit()) {
+			$e = new Github\ApiLimitExceedException("The API rate limit of {$this->getRateLimit()} has been exceeded. See https://developer.github.com/v3/#rate-limiting for details.", $e);
+
+		} elseif ($this->content && $this->isJson()) {
 			$response = $this->toArray();
 
 			if ($this->httpCode === 400) {
