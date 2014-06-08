@@ -259,7 +259,7 @@ class Client extends Nette\Object
 		}
 
 		list($params, $headers) = $this->authorizeRequest($params, $headers);
-		$url = $this->config->createUrl('api', $path, $params);
+		$url = $this->buildRequestUrl($path, $params);
 		$result = $this->httpClient->makeRequest($url, $method, $post, $headers);
 
 		return is_array($result) ? ArrayHash::from($result) : $result;
@@ -287,6 +287,57 @@ class Client extends Nette\Object
 		$this->authorizeBy = array();
 
 		return array($params, $headers);
+	}
+
+
+
+	/**
+	 * Allows you to write less code, because you won't have the get the parameters and pass them.
+	 *
+	 * <code>
+	 * $response = $client->get('/applications/:client_id/tokens/:access_token');
+	 * </code>
+	 *
+	 * @param $path
+	 * @param $params
+	 * @return Nette\Http\UrlScript
+	 * @throws \Nette\Utils\RegexpException
+	 */
+	protected function buildRequestUrl($path, $params)
+	{
+		$url = $this->config->createUrl('api', $path, $params);
+		if (substr_count($url->path, ':') === 0) { // no parameters
+			return $url;
+		}
+
+		$client = $this;
+		$url->setPath(Nette\Utils\Strings::replace($url->getPath(), '~(?<=\\/|^)\\:(\w+)(?=\\/|\\z)~i', function ($m) use ($client) {
+			if ($m[1] === 'client_id') {
+				return $client->config->appId;
+
+			} elseif ($m[1] === 'client_secret') {
+				return $client->config->appSecret;
+
+			} elseif ($m[1] === 'user_id') {
+				return $client->getUser();
+
+			} elseif ($m[1] === 'access_token') {
+				return $client->getAccessToken();
+
+			} elseif ($m[1] === 'login' && $client->getUser()) {
+				try {
+					$user = $client->get('/user'); // the repeated call is cached on http client level
+					return $user->login;
+
+				} catch (ApiException $e) {
+					return $m[0];
+				}
+			}
+
+			return $m[0];
+		}));
+
+		return $url;
 	}
 
 
