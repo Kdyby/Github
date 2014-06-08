@@ -153,7 +153,7 @@ class Client extends Nette\Object
 	 * @param array $params
 	 * @param array $headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function get($path, array $params = array(), array $headers = array())
 	{
@@ -167,7 +167,7 @@ class Client extends Nette\Object
 	 * @param array $params
 	 * @param array $headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function head($path, array $params = array(), array $headers = array())
 	{
@@ -182,7 +182,7 @@ class Client extends Nette\Object
 	 * @param array|string $post
 	 * @param array $headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function post($path, array $params = array(), $post = array(), array $headers = array())
 	{
@@ -197,7 +197,7 @@ class Client extends Nette\Object
 	 * @param array|string $post
 	 * @param array $headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function patch($path, array $params = array(), $post = array(), array $headers = array())
 	{
@@ -212,7 +212,7 @@ class Client extends Nette\Object
 	 * @param array|string $post
 	 * @param array $headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function put($path, array $params = array(), $post = array(), array $headers = array())
 	{
@@ -226,7 +226,7 @@ class Client extends Nette\Object
 	 * @param array $params
 	 * @param array $headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function delete($path, array $params = array(), array $headers = array())
 	{
@@ -247,7 +247,7 @@ class Client extends Nette\Object
 	 * @param array|string $post Post request parameters or body to send
 	 * @param array $headers Http request headers
 	 * @throws ApiException
-	 * @return ArrayHash|string
+	 * @return ArrayHash|string|Paginator|ArrayHash[]
 	 */
 	public function api($path, $method = 'GET', array $params = array(), $post = array(), array $headers = array())
 	{
@@ -261,6 +261,11 @@ class Client extends Nette\Object
 		list($params, $headers) = $this->authorizeRequest($params, $headers);
 		$url = $this->buildRequestUrl($path, $params);
 		$result = $this->httpClient->makeRequest($url, $method, $post, $headers);
+
+		$responseHeaders = $this->httpClient->getLastResponseHeaders();
+		if ($method === 'GET' && (isset($params['per_page']) || isset($params['page']) || isset($responseHeaders['Link']))) {
+			return new Paginator($this, $result);
+		}
 
 		return is_array($result) ? ArrayHash::from($result) : $result;
 	}
@@ -439,6 +444,17 @@ class Client extends Nette\Object
 		}
 
 		return $this->accessToken;
+	}
+
+
+
+	/**
+	 * @internal
+	 * @return Api\CurlClient
+	 */
+	public function getHttpClient()
+	{
+		return $this->httpClient;
 	}
 
 

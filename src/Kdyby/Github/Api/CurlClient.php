@@ -132,7 +132,7 @@ class CurlClient extends Nette\Object
 	 * @param array $headers
 	 *
 	 * @throws Github\ApiException
-	 * @return string The response text
+	 * @return string|array The response text or parsed JSON to array
 	 */
 	public function makeRequest(Nette\Http\Url $url, $method = 'GET', $post = array(), array $headers = array())
 	{
@@ -285,6 +285,23 @@ class CurlClient extends Nette\Object
 	public function getLastRequestHeaders()
 	{
 		return isset($this->lastResponseInfo['request_header']) ? $this->lastResponseInfo['request_header'] : array();
+	}
+
+
+
+	/**
+	 * @return array
+	 */
+	public function getLastRequestParameters()
+	{
+		if (!isset($this->lastResponseInfo['url'])) {
+			return array();
+		}
+
+		$url = new Nette\Http\Url($this->lastResponseInfo['url']);
+		parse_str($url->getQuery(), $params);
+
+		return $params;
 	}
 
 
