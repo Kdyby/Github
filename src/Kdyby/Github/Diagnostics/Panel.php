@@ -172,7 +172,7 @@ class Panel extends Nette\Object implements IBarPanel
 		$client->onError[] = $this->failure;
 		$client->onSuccess[] = $this->success;
 
-		self::getPanel()->addPanel($this);
+		self::getDebuggerBar()->addPanel($this);
 		self::getDebuggerBlueScreen()->addPanel(array($this, 'renderException'));
 	}
 
