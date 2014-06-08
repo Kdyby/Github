@@ -192,6 +192,7 @@ class CurlClient extends Nette\Object
 
 			if ($remaining <= 0) {
 				$e = new Github\ApiLimitExceedException("The api limit of $limit has been exceeded");
+				$e->bindRequest($post, $result, $info);
 				curl_close($ch);
 				$this->onError($e, $info);
 				throw $e;
@@ -205,6 +206,7 @@ class CurlClient extends Nette\Object
 		} catch (Nette\Utils\JsonException $jsonException) {
 			if (isset($info['headers'][0]['Content-Type']) && preg_match('~^application/json;.*~is', $info['headers'][0]['Content-Type'])) {
 				$e = new Github\ApiException($jsonException->getMessage() . (isset($response) ? "\n\n" . $response : ''), $info['http_code']);
+				$e->bindRequest($post, $result, $info);
 				curl_close($ch);
 				$this->onError($e, $info);
 				throw $e;
@@ -220,9 +222,13 @@ class CurlClient extends Nette\Object
 
 				} elseif ($info['http_code'] === 422 && isset($response['errors'])) {
 					$e = new Github\ValidationFailedException('Validation Failed: ' . self::parseErrors($response), $info['http_code'], $e);
+
+				} elseif (isset($response['message'])) {
+					$e = new Github\ApiException($response['message'], $info['http_code'], $e);
 				}
 			}
 
+			$e->bindRequest($post, $result, $info);
 			curl_close($ch);
 			$this->onError($e, $info);
 			throw $e;

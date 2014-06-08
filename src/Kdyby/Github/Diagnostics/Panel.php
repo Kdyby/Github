@@ -13,6 +13,7 @@ namespace Kdyby\Github\Diagnostics;
 use Guzzle\Common\Event;
 use Kdyby\Github\Api\CurlClient;
 use Kdyby\Github\Api\HttpClient;
+use Kdyby\Github\ApiException;
 use Nette;
 use Nette\Utils\Html;
 use Tracy\Debugger;
@@ -171,17 +172,50 @@ class Panel extends Nette\Object implements IBarPanel
 		$client->onError[] = $this->failure;
 		$client->onSuccess[] = $this->success;
 
-		self::getDebuggerBar()->addPanel($this);
+		Debugger::getBar()->addPanel($this);
+		Debugger::getBlueScreen()->addPanel(array($this, 'renderException'));
 	}
 
 
 
-	/**
-	 * @return \Tracy\Bar
-	 */
-	private static function getDebuggerBar()
+	public function renderException(\Exception $e = NULL)
 	{
-		return method_exists('Tracy\Debugger', 'getBar') ? Debugger::getBar() : Debugger::$bar;
+		if (!$e instanceof ApiException || !$e->curlInfo) {
+			return NULL;
+		}
+
+		$h = 'htmlSpecialChars';
+		$serializeHeaders = function ($headers) use ($h) {
+			$s = '';
+			foreach ($headers as $header => $value) {
+				if (!empty($header)) {
+					$s .= $h($header) . ': ';
+				}
+				$s .= $h($value) . "<br>";
+			}
+			return $s;
+		};
+
+		$panel = '';
+
+		$panel .= '<p><b>Request</b></p><div><pre><code>';
+		$panel .= $serializeHeaders($e->curlInfo['request_header']);
+		if (!in_array($e->curlInfo['method'], array('GET', 'HEAD'))) {
+			$panel .= '<br>' . $h(is_array($e->requestBody) ? json_encode($e->requestBody) : $e->requestBody);
+		}
+		$panel .= '</code></pre></div>';
+
+		$panel .= '<p><b>Response</b></p><div><pre><code>';
+		$panel .= $serializeHeaders($e->curlInfo['headers'][0]);
+		if ($e->responseBody) {
+			$panel .= '<br>' . $h($e->responseBody);
+		}
+		$panel .= '</code></pre></div>';
+
+		return array(
+			'tab' => 'Github',
+			'panel' => $panel,
+		);
 	}
 
 
