@@ -198,9 +198,6 @@ class CurlClient extends Nette\Object implements Github\HttpClient
 
 		} elseif ($request->isGet()) {
 			$options[CURLOPT_HTTPGET] = TRUE;
-
-		} elseif ($request->isPost()) {
-			$options[CURLOPT_POST] = TRUE;
 		}
 
 		// disable the 'Expect: 100-continue' behaviour. This causes CURL to wait
