@@ -16,10 +16,6 @@ use Nette\Utils\ArrayHash;
 
 
 
-if (!class_exists('Nette\Utils\ArrayHash')) {
-	class_alias('Nette\ArrayHash', 'Nette\Utils\ArrayHash');
-}
-
 /**
  * Github api client that serves for communication
  * and handles authorization on the api level.
