@@ -13,13 +13,18 @@
 		}
 	],
 	"require": {
-		"nette/nette": "2.1.*",
+		"nette/application": "2.2.*",
+		"nette/di": "2.2.*",
+		"nette/http": "2.2.*",
 
 		"kdyby/curl-ca-bundle": "~1.0",
 		"ext-curl": "*",
 		"ext-json": "*"
 	},
 	"require-dev": {
+		"nette/nette": "2.2.*",
+		"nette/bootstrap": "2.2.*",
+
 		"nette/tester": "@dev",
 		"jakub-onderka/php-parallel-lint": "~0.7"
 	},
