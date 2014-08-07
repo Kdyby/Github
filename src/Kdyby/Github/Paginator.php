@@ -117,6 +117,10 @@ class Paginator extends Nette\Object implements \Iterator
 	 */
 	public function loadedMaxResults()
 	{
+		if ($this->maxResults === NULL) {
+			return FALSE;
+		}
+
 		return $this->maxResults <= ($this->itemCursor + ($this->pageCursor - $this->firstPage) * $this->perPage);
 	}
 
