@@ -82,6 +82,10 @@ class ApiClientMock extends Nette\Object implements Kdyby\Github\HttpClient
 	 */
 	public function makeRequest(Api\Request $request)
 	{
+		if (empty($this->responses)) {
+			throw new Kdyby\Github\InvalidStateException("Unexpected request");
+		}
+
 		$this->requests[] = $request;
 		$request->setHeaders($request->getHeaders() + array('Accept' => 'application/vnd.github.v3+json')); // the CurlClient is setting this as a default
 
