@@ -76,7 +76,7 @@ class Client extends Nette\Object
 	 * @param SessionStorage $session
 	 * @param Api\CurlClient $httpClient
 	 */
-	public function __construct(Configuration $config, Nette\Http\IRequest $httpRequest, SessionStorage $session, Api\CurlClient $httpClient)
+	public function __construct(Configuration $config, Nette\Http\IRequest $httpRequest, SessionStorage $session, HttpClient $httpClient)
 	{
 		$this->config = $config;
 		$this->httpRequest = $httpRequest;
@@ -547,7 +547,7 @@ class Client extends Nette\Object
 	protected function getUserFromAccessToken()
 	{
 		try {
-			$user = $this->get('/user');
+			$user = $this->get('/user', array(), array('Accept' => 'application/json'));
 
 			return isset($user['id']) ? $user['id'] : 0;
 		} catch (\Exception $e) { }
@@ -577,6 +577,9 @@ class Client extends Nette\Object
 
 		if ($redirectUri === NULL) {
 			$redirectUri = $this->getCurrentUrl();
+			parse_str($redirectUri->getQuery(), $query);
+			unset($query['code'], $query['state']);
+			$redirectUri->setQuery($query);
 		}
 
 		try {
