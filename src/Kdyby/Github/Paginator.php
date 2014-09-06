@@ -107,7 +107,10 @@ class Paginator extends Nette\Object implements \Iterator
 	public function valid()
 	{
 		return isset($this->resources[$this->pageCursor][$this->itemCursor])
-			&& $this->maxResults > ($this->itemCursor + ($this->pageCursor - $this->firstPage) * $this->perPage);
+			&& (
+				$this->maxResults === NULL
+				|| $this->maxResults > ($this->itemCursor + ($this->pageCursor - $this->firstPage) * $this->perPage)
+			);
 	}
 
 
