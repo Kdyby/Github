@@ -137,6 +137,7 @@ class Panel extends Nette\Object implements IBarPanel
 		$this->totalTime += $current->time = $debugInfo['total_time'];
 		unset($debugInfo['total_time']);
 		$current->info = $debugInfo;
+		$current->info['method'] = $response->getRequest()->getMethod();
 		$current->result = $response->toArray() ?: $response->getContent();
 	}
 
@@ -158,6 +159,7 @@ class Panel extends Nette\Object implements IBarPanel
 		$this->totalTime += $current->time = $debugInfo['total_time'];
 		unset($debugInfo['total_time']);
 		$current->info = $debugInfo;
+		$current->info['method'] = $response->getRequest()->getMethod();
 		$current->exception = $exception;
 	}
 
