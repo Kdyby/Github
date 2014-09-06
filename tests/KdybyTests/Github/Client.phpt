@@ -66,7 +66,7 @@ class ClientTest extends Tester\TestCase
 		$client = $this->buildClient();
 		$client->setAccessToken('abcedf');
 
-		$this->httpClient->fakeResponse('{"login":"fprochazka","id":158625,"type":"User","site_admin":false,"name":"Filip Procházka","email":"filip@prochazka.su"}', 200, ['Content-Type' => 'application/json; charset=utf-8']);
+		$this->httpClient->fakeResponse('{"login":"fprochazka","id":158625,"type":"User","site_admin":false,"name":"Filip Procházka","email":"filip@prochazka.su"}', 200, array('Content-Type' => 'application/json; charset=utf-8'));
 
 		Assert::same(158625, $client->getUser());
 		Assert::count(1, $this->httpClient->requests);
@@ -74,19 +74,19 @@ class ClientTest extends Tester\TestCase
 		$secondRequest = $this->httpClient->requests[0];
 		Assert::same('GET', $secondRequest->getMethod());
 		Assert::match('https://api.github.com/user', (string) $secondRequest->getUrl());
-		Assert::same(['Accept' => 'application/json', 'Authorization' => 'token abcedf'], $secondRequest->getHeaders());
+		Assert::same(array('Accept' => 'application/json', 'Authorization' => 'token abcedf'), $secondRequest->getHeaders());
 	}
 
 
 
 	public function testAuthorized_authorizeFromCodeAndState()
 	{
-		$client = $this->buildClient(['state' => 'abcdef123456', 'code' => '654321fedcba']);
+		$client = $this->buildClient(array('state' => 'abcdef123456', 'code' => '654321fedcba'));
 
 		$this->session->state = 'abcdef123456'; // The method establishCSRFTokenState() is called in the LoginDialog
 
-		$this->httpClient->fakeResponse('{"access_token":"6dc29d696930cb9b76914bd9d25c63c698957c60","token_type":"bearer","scope":"user:email"}', 200, ['Content-Type' => 'application/json; charset=utf-8']);
-		$this->httpClient->fakeResponse('{"login":"fprochazka","id":158625,"type":"User","site_admin":false,"name":"Filip Procházka","email":"filip@prochazka.su"}', 200, ['Content-Type' => 'application/json; charset=utf-8']);
+		$this->httpClient->fakeResponse('{"access_token":"6dc29d696930cb9b76914bd9d25c63c698957c60","token_type":"bearer","scope":"user:email"}', 200, array('Content-Type' => 'application/json; charset=utf-8'));
+		$this->httpClient->fakeResponse('{"login":"fprochazka","id":158625,"type":"User","site_admin":false,"name":"Filip Procházka","email":"filip@prochazka.su"}', 200, array('Content-Type' => 'application/json; charset=utf-8'));
 
 		Assert::same(158625, $client->getUser());
 		Assert::count(2, $this->httpClient->requests);
@@ -94,22 +94,22 @@ class ClientTest extends Tester\TestCase
 		$firstRequest = $this->httpClient->requests[0];
 		Assert::same('POST', $firstRequest->getMethod());
 		Assert::match('https://github.com/login/oauth/access_token?client_id=' . $this->config->appId . '&client_secret=' . $this->config->appSecret . '&code=%a%&redirect_uri=%a%', (string) $firstRequest->getUrl());
-		Assert::same(['Accept' => 'application/json'], $firstRequest->getHeaders());
+		Assert::same(array('Accept' => 'application/json'), $firstRequest->getHeaders());
 
 		$secondRequest = $this->httpClient->requests[1];
 		Assert::same('GET', $secondRequest->getMethod());
 		Assert::match('https://api.github.com/user', (string) $secondRequest->getUrl());
-		Assert::same(['Accept' => 'application/json', 'Authorization' => 'token 6dc29d696930cb9b76914bd9d25c63c698957c60'], $secondRequest->getHeaders());
+		Assert::same(array('Accept' => 'application/json', 'Authorization' => 'token 6dc29d696930cb9b76914bd9d25c63c698957c60'), $secondRequest->getHeaders());
 	}
 
 
 
-	protected function buildClient($query = [])
+	protected function buildClient($query = array())
 	{
 		// please do not abuse this
 		$this->config = new Kdyby\Github\Configuration('123', 'abc');
 
-		$httpRequest = new Nette\Http\Request(new Nette\Http\UrlScript('http://www.kdyby.org' . ($query ? '?' . http_build_query($query) : '')), $query, []);
+		$httpRequest = new Nette\Http\Request(new Nette\Http\UrlScript('http://www.kdyby.org' . ($query ? '?' . http_build_query($query) : '')), $query, array());
 
 		$session = new Nette\Http\Session($httpRequest, new Nette\Http\Response());
 		$session->setStorage(new ArraySessionStorage($session));

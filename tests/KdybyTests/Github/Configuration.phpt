@@ -43,15 +43,15 @@ class ConfigurationTest extends Tester\TestCase
 	{
 		Assert::match('https://api.github.com/users/fprochazka', (string) $this->config->createUrl('api', '/users/fprochazka'));
 
-		Assert::match('https://github.com/login/oauth/access_token?client_id=123&client_secret=abc', (string) $this->config->createUrl('oauth', 'access_token', [
+		Assert::match('https://github.com/login/oauth/access_token?client_id=123&client_secret=abc', (string) $this->config->createUrl('oauth', 'access_token', array(
 			'client_id' => $this->config->appId,
 			'client_secret' => $this->config->appSecret
-		]));
+		)));
 
-		Assert::match('https://github.com/login/oauth/authorize?client_id=123&client_secret=abc', (string) $this->config->createUrl('oauth', 'authorize', [
+		Assert::match('https://github.com/login/oauth/authorize?client_id=123&client_secret=abc', (string) $this->config->createUrl('oauth', 'authorize', array(
 			'client_id' => $this->config->appId,
 			'client_secret' => $this->config->appSecret
-		]));
+		)));
 	}
 
 }
