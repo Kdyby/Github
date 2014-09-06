@@ -15,31 +15,15 @@ use Nette;
 use Tester;
 use Tester\Assert;
 
-require_once __DIR__ . '/../bootstrap.php';
 
 
+require_once __DIR__ . '/TestCase.php';
 
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class ClientTest extends Tester\TestCase
+class ClientTest extends TestCase
 {
-
-	/**
-	 * @var ApiClientMock
-	 */
-	private $httpClient;
-
-	/**
-	 * @var Kdyby\Github\SessionStorage
-	 */
-	private $session;
-
-	/**
-	 * @var Kdyby\Github\Configuration
-	 */
-	private $config;
-
 
 
 	public function testUnauthorized()
@@ -74,7 +58,7 @@ class ClientTest extends Tester\TestCase
 		$secondRequest = $this->httpClient->requests[0];
 		Assert::same('GET', $secondRequest->getMethod());
 		Assert::match('https://api.github.com/user', (string) $secondRequest->getUrl());
-		Assert::same(array('Accept' => 'application/json', 'Authorization' => 'token abcedf'), $secondRequest->getHeaders());
+		Assert::same(array('Authorization' => 'token abcedf', 'Accept' => 'application/vnd.github.v3+json'), $secondRequest->getHeaders());
 	}
 
 
@@ -99,25 +83,7 @@ class ClientTest extends Tester\TestCase
 		$secondRequest = $this->httpClient->requests[1];
 		Assert::same('GET', $secondRequest->getMethod());
 		Assert::match('https://api.github.com/user', (string) $secondRequest->getUrl());
-		Assert::same(array('Accept' => 'application/json', 'Authorization' => 'token 6dc29d696930cb9b76914bd9d25c63c698957c60'), $secondRequest->getHeaders());
-	}
-
-
-
-	protected function buildClient($query = array())
-	{
-		// please do not abuse this
-		$this->config = new Kdyby\Github\Configuration('123', 'abc');
-
-		$httpRequest = new Nette\Http\Request(new Nette\Http\UrlScript('http://www.kdyby.org' . ($query ? '?' . http_build_query($query) : '')), $query, array());
-
-		$session = new Nette\Http\Session($httpRequest, new Nette\Http\Response());
-		$session->setStorage(new ArraySessionStorage($session));
-		$this->session = new Kdyby\Github\SessionStorage($session, $this->config);
-
-		$this->httpClient = new ApiClientMock();
-
-		return new Kdyby\Github\Client($this->config, $httpRequest, $this->session, $this->httpClient);
+		Assert::same(array('Authorization' => 'token 6dc29d696930cb9b76914bd9d25c63c698957c60', 'Accept' => 'application/vnd.github.v3+json'), $secondRequest->getHeaders());
 	}
 
 }
