@@ -50,4 +50,4 @@ class ExtensionTest extends Tester\TestCase
 
 }
 
-KdybyTests\run(new ExtensionTest());
+\run(new ExtensionTest());
