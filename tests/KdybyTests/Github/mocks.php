@@ -24,10 +24,10 @@ class ApiClientMock extends Nette\Object implements Kdyby\Github\HttpClient
 {
 
 	/** @var Api\Request[] */
-	public $requests = [];
+	public $requests = array();
 
 	/** @var array */
-	public $responses = [];
+	public $responses = array();
 
 
 	/**
@@ -47,7 +47,7 @@ class ApiClientMock extends Nette\Object implements Kdyby\Github\HttpClient
 
 	public function fakeResponse($content, $httpCode, $headers = array(), $info = array())
 	{
-		$this->responses[] = [$content, $httpCode, $headers, $info];
+		$this->responses[] = array($content, $httpCode, $headers, $info);
 	}
 
 }
