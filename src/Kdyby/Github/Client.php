@@ -551,7 +551,7 @@ class Client extends Nette\Object
 	protected function getUserFromAccessToken()
 	{
 		try {
-			$user = $this->get('/user', array(), array('Accept' => 'application/json'));
+			$user = $this->get('/user');
 
 			return isset($user['id']) ? $user['id'] : 0;
 		} catch (\Exception $e) { }

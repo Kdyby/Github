@@ -15,6 +15,50 @@ use Kdyby\Github\Api;
 use Kdyby\Github\ApiException;
 use Nette;
 
+require_once __DIR__ . '/../bootstrap.php';
+
+
+
+/**
+ * @author Filip Procházka <filip@prochazka.su>
+ */
+class TestCase extends \Tester\TestCase
+{
+
+	/**
+	 * @var ApiClientMock
+	 */
+	protected $httpClient;
+
+	/**
+	 * @var Kdyby\Github\SessionStorage
+	 */
+	protected $session;
+
+	/**
+	 * @var Kdyby\Github\Configuration
+	 */
+	protected $config;
+
+
+
+	protected function buildClient($query = array())
+	{
+		// please do not abuse this
+		$this->config = new Kdyby\Github\Configuration('123', 'abc');
+
+		$httpRequest = new Nette\Http\Request(new Nette\Http\UrlScript('http://www.kdyby.org' . ($query ? '?' . http_build_query($query) : '')), $query, array());
+
+		$session = new Nette\Http\Session($httpRequest, new Nette\Http\Response());
+		$session->setStorage(new ArraySessionStorage($session));
+		$this->session = new Kdyby\Github\SessionStorage($session, $this->config);
+
+		$this->httpClient = new ApiClientMock();
+
+		return new Kdyby\Github\Client($this->config, $httpRequest, $this->session, $this->httpClient);
+	}
+}
+
 
 
 /**
@@ -30,6 +74,7 @@ class ApiClientMock extends Nette\Object implements Kdyby\Github\HttpClient
 	public $responses = array();
 
 
+
 	/**
 	 * @param Api\Request $request
 	 * @throws ApiException
@@ -38,6 +83,7 @@ class ApiClientMock extends Nette\Object implements Kdyby\Github\HttpClient
 	public function makeRequest(Api\Request $request)
 	{
 		$this->requests[] = $request;
+		$request->setHeaders($request->getHeaders() + array('Accept' => 'application/vnd.github.v3+json')); // the CurlClient is setting this as a default
 
 		list($content, $httpCode, $headers, $info) = array_shift($this->responses);
 		return new Api\Response($request, $content, $httpCode, $headers, $info);
