@@ -71,16 +71,6 @@ class CurlClient extends Nette\Object implements Github\HttpClient
 	public $onSuccess = array();
 
 	/**
-	 * @var Github\Client
-	 */
-	private $github;
-
-	/**
-	 * @var Github\Configuration
-	 */
-	private $config;
-
-	/**
 	 * @var array
 	 */
 	private $memoryCache = array();
@@ -90,17 +80,6 @@ class CurlClient extends Nette\Object implements Github\HttpClient
 	public function __construct()
 	{
 		$this->curlOptions = self::$defaultCurlOptions;
-	}
-
-
-
-	/**
-	 * @param Github\Client $github
-	 */
-	public function setGithub(Github\Client $github)
-	{
-		$this->github = $github;
-		$this->config = $github->getConfig();
 	}
 
 
