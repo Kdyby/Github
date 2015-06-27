@@ -129,10 +129,10 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 	/**
-	 * @param \Exception $exception
+	 * @param \Exception|\Throwable $exception
 	 * @param \Kdyby\Github\Api\Response $response
 	 */
-	public function failure(\Exception $exception, Api\Response $response)
+	public function failure($exception, Api\Response $response)
 	{
 		if (!isset($this->calls[$oid = spl_object_hash($response->getRequest())])) {
 			return;
@@ -165,7 +165,7 @@ class Panel extends Nette\Object implements IBarPanel
 
 
 
-	public function renderException(\Exception $e = NULL)
+	public function renderException($e = NULL)
 	{
 		if (!$e instanceof ApiException || !$e->response) {
 			return NULL;
