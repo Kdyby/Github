@@ -13,6 +13,7 @@ namespace Kdyby\Github\Diagnostics;
 use Kdyby\Github\Api;
 use Kdyby\Github\ApiException;
 use Nette;
+use Nette\Utils\Callback;
 use Nette\Utils\Html;
 use Tracy\Bar;
 use Tracy\BlueScreen;
@@ -73,10 +74,10 @@ class Panel extends Nette\Object implements IBarPanel
 		}
 
 		ob_start();
-		$esc = callback('Nette\Templating\Helpers::escapeHtml');
+		$esc = Callback::closure('Nette\Templating\Helpers::escapeHtml');
 		$click = class_exists('\Tracy\Dumper')
 			? function ($o, $c = FALSE) { return \Tracy\Dumper::toHtml($o, array('collapse' => $c)); }
-			: callback('\Tracy\Helpers::clickableDump');
+			: Callback::closure('\Tracy\Helpers::clickableDump');
 		$totalTime = $this->totalTime ? sprintf('%0.3f', $this->totalTime * 1000) . ' ms' : 'none';
 
 		require __DIR__ . '/panel.phtml';
