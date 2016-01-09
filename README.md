@@ -4,6 +4,7 @@ Kdyby/Github
 [![Build Status](https://travis-ci.org/Kdyby/Github.svg?branch=master)](https://travis-ci.org/Kdyby/Github)
 [![Downloads this Month](https://img.shields.io/packagist/dm/kdyby/github.svg)](https://packagist.org/packages/kdyby/github)
 [![Latest stable](https://img.shields.io/packagist/v/kdyby/github.svg)](https://packagist.org/packages/kdyby/github)
+[![Join the chat at https://gitter.im/Kdyby/Help](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Kdyby/Help)
 
 Github API client with authorization for Nette Framework
 
