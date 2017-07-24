@@ -51,7 +51,7 @@ class Panel extends Nette\Object implements IBarPanel
 	{
 		$img = Html::el('img', array('height' => '16px'))
 			->src('data:image/png;base64,' . base64_encode(file_get_contents(__DIR__ . '/GitHub-Mark-32px.png')));
-		$tab = Html::el('span')->title('Github')->add($img);
+		$tab = Html::el('span')->title('Github')->addHtml($img);
 		$title = Html::el()->setText('Github');
 		if ($this->calls) {
 			$title->setText(
@@ -59,7 +59,7 @@ class Panel extends Nette\Object implements IBarPanel
 				' / ' . sprintf('%0.2f', $this->totalTime) . ' s'
 			);
 		}
-		return (string)$tab->add($title);
+		return (string)$tab->addHtml($title);
 	}
 
 
